@@ -1,0 +1,31 @@
+# Dependencias (El agujero negro de archivos)
+node_modules/
+bower_components/
+
+# Control de Versiones
+.git/
+.svn/
+.hg/
+
+# Archivos de Build y Salida
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Entornos Virtuales (Python)
+venv/
+.venv/
+env/
+
+# Archivos de Configuración Sensibles
+.env
+.env.*
+*.pem
+*.key
+
+# Logs y Caché
+*.log
+.eslintcache
+.cache/

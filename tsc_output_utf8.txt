@@ -1,0 +1,5 @@
+src/components/tables/ClinicalHistoryNoteColumns.tsx(8,5): error TS6133: 'DropdownMenuLabel' is declared but its value is never read.
+src/components/tables/ClinicalHistoryNoteColumns.tsx(9,5): error TS6133: 'DropdownMenuSeparator' is declared but its value is never read.
+src/pages/appointments/AppointmentFormPage.tsx(14,9): error TS6133: 'patients' is declared but its value is never read.
+src/pages/appointments/AppointmentFormPage.tsx(53,22): error TS2741: Property 'filteredPatients' is missing in type '{ form: UseFormReturn<{ patientId: string; doctorId: string; consultingRoomId: string; startTime: string; endTime: string; status: any; reason?: string | undefined; notes?: string | undefined; }, any, { ...; }>; ... 11 more ...; userRole: UserRole | undefined; }' but required in type 'AppointmentFormUIProps'.
+src/pages/settings/ConsultingRoomsPage.tsx(5,5): error TS6133: 'MapPin' is declared but its value is never read.

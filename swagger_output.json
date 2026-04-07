@@ -1,0 +1,31 @@
+{
+  "endpoint": {
+    "get": {
+      "operationId": "DoctorController_getDashboard",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Doctor dashboard data found"
+        },
+        "401": {
+          "description": "Unauthorized"
+        },
+        "403": {
+          "description": "Forbidden"
+        }
+      },
+      "security": [
+        {
+          "bearer": []
+        },
+        {
+          "bearer": []
+        }
+      ],
+      "summary": "Get doctor dashboard data",
+      "tags": [
+        "Doctor"
+      ]
+    }
+  }
+}
