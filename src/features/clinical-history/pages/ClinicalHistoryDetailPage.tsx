@@ -44,10 +44,6 @@ export function ClinicalHistoryDetailPage() {
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" className="w-full sm:w-auto text-sm">
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Exportar PDF
-                    </Button>
                     <Button onClick={() => navigate(`/clinical-history/notes/new?historyId=${history.id}`)} className="w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" />
                         Añadir Nota
@@ -163,6 +159,24 @@ export function ClinicalHistoryDetailPage() {
     );
 }
 
+const labelsMap: Record<string, string> = {
+    presionArterial: 'Presión Arterial',
+    frecuenciaCardiaca: 'Frecuencia Cardíaca',
+    frecuenciaRespiratoria: 'Frecuencia Respiratoria',
+    saturacionOxigeno: 'Saturación O2',
+    temperatura: 'Temperatura',
+    peso: 'Peso',
+    altura: 'Altura',
+    imc: 'IMC',
+    otros: 'Exámenes / Hallazgos Adicionales',
+    examenes: 'Exámenes Complementarios',
+    medicacion: 'Medicación/Tratamiento',
+    medication: 'Medicación/Tratamiento'
+};
+
+const formatLabel = (key: string) => labelsMap[key] || key.replace(/([A-Z])/g, ' $1').trim();
+const isNA = (val: any) => !val || String(val).toUpperCase() === 'N/A' || String(val).toUpperCase() === 'NINGUNO' || String(val).toUpperCase() === 'NINGUNA';
+
 function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
     return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -179,28 +193,40 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
                         {history.enfermedadActual || 'No especificada'}
                     </p>
                 </div>
-                {history.antecedentesPersonales && Object.keys(history.antecedentesPersonales).length > 0 && (
+                {history.antecedentesPersonales && (
                     <div>
                         <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Antecedentes Personales</h4>
-                        <div className="grid grid-cols-2 gap-2 text-sm border-l-2 border-primary/20 pl-4">
-                            {Object.entries(history.antecedentesPersonales).map(([k, v]) => (
-                                <div key={k} className="flex flex-col">
-                                    <span className="text-xs text-muted-foreground capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
-                                    <span className="font-medium">{String(v)}</span>
-                                </div>
-                            ))}
+                        <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none">
+                            {typeof history.antecedentesPersonales === 'string' ? (
+                                <div dangerouslySetInnerHTML={{ __html: history.antecedentesPersonales }} />
+                            ) : (
+                                <div dangerouslySetInnerHTML={{ __html: (history.antecedentesPersonales as any).descripcion || 'Ninguno' }} />
+                            )}
                         </div>
                     </div>
                 )}
-                {history.habitos && Object.keys(history.habitos).length > 0 && (
+                {(history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares) && (
                     <div>
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Hábitos</h4>
-                        <div className="flex flex-wrap gap-3 text-sm">
-                            {Object.entries(history.habitos).map(([k, v]) => (
-                                <Badge variant="secondary" key={k} className="font-normal capitalize py-1">
-                                    <strong className="mr-1">{k}:</strong> {String(v)}
-                                </Badge>
-                            ))}
+                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Antecedentes Familiares</h4>
+                        {(() => {
+                            const antFam = history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares;
+                            return typeof antFam === 'string' ? (
+                                <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: antFam }} />
+                            ) : (
+                                <div className="text-sm border-l-2 border-primary/20 pl-4">{String(antFam)}</div>
+                            );
+                        })()}
+                    </div>
+                )}
+                {history.habitos && (
+                    <div>
+                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Hábitos Psicobiológicos</h4>
+                        <div className="text-sm border-l-2 border-secondary/20 pl-4 prose-sm max-w-none">
+                            {typeof history.habitos === 'string' ? (
+                                <div dangerouslySetInnerHTML={{ __html: history.habitos }} />
+                            ) : (
+                                <div dangerouslySetInnerHTML={{ __html: (history.habitos as any).descripcion || 'N/A' }} />
+                            )}
                         </div>
                     </div>
                 )}
@@ -208,16 +234,22 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
 
             <div className="space-y-4">
                 {history.examenFisico && Object.keys(history.examenFisico).length > 0 && (
-                    <div>
+                    <div className="space-y-4">
                         <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Examen Físico</h4>
-                        <div className="grid gap-2 text-sm p-3 bg-muted/30 rounded-lg">
-                            {Object.entries(history.examenFisico).map(([k, v]) => (
-                                <div key={k} className="grid grid-cols-[120px_1fr] items-start">
-                                    <span className="text-muted-foreground capitalize font-medium">{k.replace(/([A-Z])/g, ' $1')}:</span>
-                                    <span>{String(v)}</span>
+                        <div className="grid grid-cols-2 gap-3 text-sm p-3 bg-muted/30 rounded-lg">
+                            {Object.entries(history.examenFisico).filter(([k]) => k !== 'otros').map(([k, v]) => (
+                                <div key={k} className="flex flex-col border-b border-muted py-1 last:border-0">
+                                    <span className="text-[10px] text-muted-foreground uppercase font-bold">{formatLabel(k)}</span>
+                                    <span className={cn("font-medium", isNA(v) && "text-muted-foreground/40")}>{String(v)}</span>
                                 </div>
                             ))}
                         </div>
+                        {history.examenFisico.otros && (
+                            <div className="mt-2">
+                                <span className="text-xs text-muted-foreground font-semibold uppercase">{formatLabel('otros')}</span>
+                                <div className="text-sm border-l-2 border-primary/20 pl-4 mt-1 prose-sm" dangerouslySetInnerHTML={{ __html: history.examenFisico.otros }} />
+                            </div>
+                        )}
                     </div>
                 )}
                 {history.diagnosticos && history.diagnosticos.length > 0 && (
@@ -241,8 +273,8 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
                             <div className="space-y-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
                                 {Object.entries(history.planManejo).map(([k, v]) => (
                                     <div key={k} className="text-sm flex flex-col">
-                                        <span className="font-semibold capitalize text-primary/80">{k.replace(/([A-Z])/g, ' $1')}</span>
-                                        <span className="text-muted-foreground">{String(v)}</span>
+                                        <span className="font-semibold text-primary/80">{formatLabel(k)}</span>
+                                        <span className={cn("text-muted-foreground", isNA(v) && "opacity-40")}>{String(v)}</span>
                                     </div>
                                 ))}
                             </div>

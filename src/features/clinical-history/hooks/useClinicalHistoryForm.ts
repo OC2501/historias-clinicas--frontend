@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { clinicalHistoryApi, patientsApi, specialtiesApi, doctorsApi } from '@/api';
+import { clinicalHistoryApi, patientsApi, doctorsApi } from '@/api';
 import type { Patient, Doctor, CreateClinicalHistoryRequest } from '@/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ export function useClinicalHistoryForm() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { user } = useAuth();
-    
+
     const [patientSearch, setPatientSearch] = useState('');
     const [isPatientListOpen, setIsPatientListOpen] = useState(false);
     const [diagInput, setDiagInput] = useState('');
@@ -28,14 +28,18 @@ export function useClinicalHistoryForm() {
             motivoConsulta: '',
             enfermedadActual: '',
             diagnosticos: [],
-            asma: false,
-            alergias: '',
-            tabaquismo: '',
-            ejercicio: '',
+            antecedentesPersonales: '',
+            antecedentesFamiliares: '',
+            habitosPsicobiologicos: '',
             presionArterial: '',
             frecuenciaCardiaca: '',
+            frecuenciaRespiratoria: '',
+            temperatura: '',
             peso: '',
             altura: '',
+            imc: '',
+            saturacionOxigeno: '',
+            otros: '',
             examenes: '',
             medicacion: '',
             formData: {
@@ -44,7 +48,6 @@ export function useClinicalHistoryForm() {
         },
     });
 
-    const selectedSpecialty = form.watch('specialty');
     const selectedPatientId = form.watch('patientId');
 
     // Queries
@@ -58,15 +61,9 @@ export function useClinicalHistoryForm() {
         queryFn: () => doctorsApi.getAll(),
     });
 
-    const { data: templateRes, isLoading: isLoadingTemplate } = useQuery({
-        queryKey: ['specialty-template', selectedSpecialty],
-        queryFn: () => specialtiesApi.getBySpecialty(selectedSpecialty),
-        enabled: !!selectedSpecialty,
-    });
-
     const patients = useMemo(() => ((patientsRes?.data as any)?.data || patientsRes?.data || []) as Patient[], [patientsRes]);
     const doctors = useMemo(() => ((doctorsRes?.data as any)?.data || doctorsRes?.data || []) as Doctor[], [doctorsRes]);
-    const template = (templateRes?.data as any)?.data || templateRes?.data || null;
+
 
 
     // Effect to set doctor initial data
@@ -91,6 +88,27 @@ export function useClinicalHistoryForm() {
             p.identificationNumber?.includes(search)
         );
     }, [patients, patientSearch]);
+
+    // IMC Auto-calculation
+    const peso = form.watch('peso');
+    const altura = form.watch('altura');
+
+    useEffect(() => {
+        if (peso && altura) {
+            const p = parseFloat(peso);
+            const a = parseFloat(altura);
+            if (p > 0 && a > 0) {
+                const heightInMeters = a / 100;
+                const imcValue = p / (heightInMeters * heightInMeters);
+                // Only update if it's different to avoid unnecessary re-renders
+                const currentImc = form.getValues('imc');
+                const newImc = imcValue.toFixed(1);
+                if (currentImc !== newImc) {
+                    form.setValue('imc', newImc);
+                }
+            }
+        }
+    }, [peso, altura, form]);
 
     const addDiagnostic = () => {
         if (!diagInput.trim()) return;
@@ -128,19 +146,19 @@ export function useClinicalHistoryForm() {
                 enfermedadActual: values.enfermedadActual,
                 diagnosticos: values.diagnosticos,
                 datosEspecificos: values.formData?.datosEspecificos || {},
-                antecedentesPersonales: {
-                    asma: values.asma ? 'Sí' : 'No',
-                    alergias: values.alergias || 'Ninguna',
-                },
-                habitos: {
-                    tabaquismo: values.tabaquismo || 'N/A',
-                    ejercicio: values.ejercicio || 'N/A',
-                },
+                antecedentesFamiliares: values.antecedentesFamiliares || 'Ninguno',
+                antecedentesPersonales: values.antecedentesPersonales || 'Ninguno',
+                habitos: values.habitosPsicobiologicos || 'N/A',
                 examenFisico: {
                     presionArterial: values.presionArterial || 'N/A',
                     frecuenciaCardiaca: values.frecuenciaCardiaca || 'N/A',
+                    frecuenciaRespiratoria: values.frecuenciaRespiratoria || 'N/A',
+                    saturacionOxigeno: values.saturacionOxigeno || 'N/A',
+                    temperatura: values.temperatura || 'N/A',
                     peso: values.peso || 'N/A',
                     altura: values.altura || 'N/A',
+                    imc: values.imc || 'N/A',
+                    otros: values.otros || '',
                 },
                 planManejo: {
                     examenes: values.examenes || 'Ninguno',
@@ -154,13 +172,12 @@ export function useClinicalHistoryForm() {
     const selectedPatient = patients.find(p => p.id === selectedPatientId);
     const selectedDoctor = doctors.find(d => d.id === form.watch('doctorId'));
 
-    const isLoading = isLoadingPatients || isLoadingDoctors || (!!selectedSpecialty && isLoadingTemplate);
+    const isLoading = isLoadingPatients || isLoadingDoctors;
 
     return {
         form,
         patients,
         doctors,
-        template,
         isLoading,
         isSubmitting: createMutation.isPending,
         patientSearch,

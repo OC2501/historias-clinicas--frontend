@@ -140,12 +140,6 @@ export function DashboardPage() {
                         Bienvenido, <span className="text-foreground font-medium">{user?.name}</span>. Aquí tienes un resumen de hoy.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="hidden sm:flex">
-                        <ArrowUpRight className="mr-2 h-4 w-4" />
-                        Exportar Reporte
-                    </Button>
-                </div>
             </div>
 
             {/* Onboarding / Missing Profile Alert */}

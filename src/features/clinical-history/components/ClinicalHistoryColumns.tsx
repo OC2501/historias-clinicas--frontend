@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Eye, FileText, MoreHorizontal } from 'lucide-react';
+import { Eye, FileText, MoreHorizontal, Printer } from 'lucide-react';
 import type { ClinicalHistory } from '@/types';
 import {
     DropdownMenu,
@@ -12,7 +12,11 @@ import {
 import { Button } from '@/components/ui/button';
 import type { Column } from '@/types/table';
 
-export const getClinicalHistoryColumns = (navigate: (path: string) => void): Column<ClinicalHistory>[] => [
+export const getClinicalHistoryColumns = (
+    navigate: (path: string) => void,
+    onPrint?: (history: ClinicalHistory) => void,
+    onDelete?: (history: ClinicalHistory) => void
+): Column<ClinicalHistory>[] => [
     {
         header: 'Fecha',
         accessorKey: (history) => history?.fecha ? format(new Date(history.fecha), 'dd/MM/yyyy') : 'S/F',
@@ -61,16 +65,23 @@ export const getClinicalHistoryColumns = (navigate: (path: string) => void): Col
                         <FileText className="mr-2 h-4 w-4" />
                         Nueva Nota
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        if (onPrint) onPrint(history);
+                    }}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                         className="text-destructive"
                         onClick={(e) => {
-                            e.stopPropagation();
-                            // Delete logic would go here
-                        }}
-                    >
-                        Eliminar
-                    </DropdownMenuItem>
+                        e.stopPropagation();
+                        if (onDelete) onDelete(history);
+                    }}
+                >
+                    Eliminar
+                </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         ),

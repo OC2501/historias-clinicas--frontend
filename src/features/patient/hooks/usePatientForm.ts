@@ -43,7 +43,7 @@ export function usePatientForm(id?: string) {
             lastName: '',
             identificationNumber: '',
             birthDate: '',
-            gender: undefined,
+            gender: '' as any,
             phone: '',
             address: '',
             email: '',
@@ -104,6 +104,7 @@ export function usePatientForm(id?: string) {
             if (!payload.address) delete payload.address;
             if (!payload.doctorId) delete payload.doctorId;
             if (!payload.email) delete payload.email;
+            if (!payload.identificationNumber) delete payload.identificationNumber;
 
             if (isEdit) {
                 await patientsApi.update(id!, payload);
@@ -122,7 +123,9 @@ export function usePatientForm(id?: string) {
             navigate('/patients');
         } catch (error: any) {
             console.error('Error saving patient:', error);
-            toast.error(error.response?.data?.message || 'Error al guardar el paciente');
+            const serverMessage = error.response?.data?.message;
+            const message = Array.isArray(serverMessage) ? serverMessage.join(', ') : serverMessage;
+            toast.error(message || 'Error al guardar el paciente');
         } finally {
             setIsSubmitting(false);
         }

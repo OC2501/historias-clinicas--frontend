@@ -125,10 +125,19 @@ export function PatientDetailPage() {
             <PatientDetailHeader patient={patient} />
 
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="bg-muted/30 p-1 rounded-2xl border mb-6 flex flex-col sm:flex-row sm:flex-wrap w-full md:w-auto h-auto gap-1">
-                    <TabsTrigger value="general" className="rounded-xl px-6 py-2.5 data-[state=active]:shadow-md w-full sm:w-auto">Información</TabsTrigger>
-                    <TabsTrigger value="history" className="rounded-xl px-6 py-2.5 data-[state=active]:shadow-md w-full sm:w-auto">Historias Clínicas</TabsTrigger>
-                    <TabsTrigger value="notes" className="rounded-xl px-6 py-2.5 data-[state=active]:shadow-md w-full sm:w-auto">Notas de Evolución</TabsTrigger>
+                <TabsList className="grid grid-cols-2 sm:grid-cols-3 w-full lg:max-w-3xl !h-auto sm:!h-12 p-1.5 bg-muted/50 rounded-xl gap-1.5 shadow-inner grow mb-6">
+                    <TabsTrigger value="general" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                        <User className="h-4 w-4" />
+                        <span className="text-xs sm:text-sm font-medium">Información</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                        <Stethoscope className="h-4 w-4" />
+                        <span className="text-xs sm:text-sm font-medium">Historias</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="notes" className="h-12 sm:h-full gap-2 rounded-lg col-span-2 sm:col-span-1 data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="text-xs sm:text-sm font-medium">Notas de Evolución</span>
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* Tab: General - Refactored */}

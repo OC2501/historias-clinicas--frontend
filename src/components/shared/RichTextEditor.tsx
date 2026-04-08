@@ -1,7 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Underline } from '@tiptap/extension-underline';
-import { Link } from '@tiptap/extension-link';
+// Underline and Link moved to StarterKit or removed due to duplication
+
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
@@ -20,7 +20,6 @@ import {
     Heading2,
     Table as TableIcon,
     Plus,
-    Minus,
     Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,13 +66,10 @@ export function RichTextEditor({ value, onChange, placeholder, className, compac
     const editor = useEditor({
         extensions: [
             StarterKit,
-            Underline,
-            Link.configure({
-                openOnClick: false,
-                HTMLAttributes: {
-                    class: 'text-primary underline cursor-pointer',
-                },
-            }),
+            // Underline and Link are reported as duplicates, 
+            // likely already included in this version's StarterKit.
+            // Underline,
+            // Link.configure({ ... }),
             Table.configure({
                 resizable: true,
             }),

@@ -103,8 +103,20 @@ interface MedicalReportPDFProps {
     doctor?: any;
 }
 
-const stripHtml = (html: string | undefined | null) => {
+const stripHtml = (html: any): string => {
     if (!html) return 'No registrado';
+
+    // Si es un objeto, lo formateamos recursivamente o por llaves
+    if (typeof html === 'object') {
+        return Object.entries(html)
+            .map(([k, v]) => {
+                const label = k.replace(/([A-Z])/g, ' $1').toUpperCase();
+                const value = typeof v === 'string' ? stripHtml(v) : String(v);
+                return `${label}: ${value}`;
+            })
+            .join('\n');
+    }
+
     return String(html)
         .replace(/<p[^>]*>/g, '')
         .replace(/<\/p>/g, '\n')
@@ -116,9 +128,28 @@ const stripHtml = (html: string | undefined | null) => {
         .trim() || 'No registrado';
 };
 
+const pdfLabelsMap: Record<string, string> = {
+    presionArterial: 'Presión Arterial',
+    frecuenciaCardiaca: 'Frecuencia Cardíaca',
+    frecuenciaRespiratoria: 'Frec. Respiratoria',
+    saturacionOxigeno: 'Sat. O2 (%)',
+    temperatura: 'Temp. (°C)',
+    peso: 'Peso (Kg)',
+    altura: 'Altura (cm)',
+    imc: 'IMC',
+    otros: 'EXÁMENES ADICIONALES',
+    examenes: 'Exámenes',
+    medicacion: 'Medicación'
+};
+
+const formatPdfLabel = (key: string) => pdfLabelsMap[key] || key.replace(/([A-Z])/g, ' $1').toUpperCase();
+
 export const MedicalReportPDF = ({ data, patient, doctor }: MedicalReportPDFProps) => {
     const today = new Date();
     const formattedDate = format(today, "dd 'de' MMMM, yyyy", { locale: es });
+
+    // Helper para obtener antecedentes familiares de posibles ubicaciones
+    const antFamiliares = data.antecedentesFamiliares || data.datosEspecificos?.antecedentesFamiliares;
 
     const calculateAge = (birthDate: string | undefined) => {
         if (!birthDate) return 'N/A';
@@ -182,24 +213,32 @@ export const MedicalReportPDF = ({ data, patient, doctor }: MedicalReportPDFProp
                         <Text style={styles.value}>{data.enfermedadActual}</Text>
                     </View>
 
-                    {data.antecedentesPersonales && data.antecedentesPersonales !== 'No' && (
+                    {data.antecedentesPersonales && (
                         <View style={{ marginBottom: 10 }}>
                             <Text style={styles.label}>Antecedentes Personales:</Text>
-                            <Text style={styles.value}>{stripHtml(data.antecedentesPersonales)}</Text>
+                            <Text style={styles.value}>
+                                {typeof data.antecedentesPersonales === 'string'
+                                    ? stripHtml(data.antecedentesPersonales)
+                                    : stripHtml((data.antecedentesPersonales as any).descripcion || 'Ninguno')}
+                            </Text>
                         </View>
                     )}
 
-                    {data.antecedentesFamiliares && data.antecedentesFamiliares !== 'No' && (
+                    {antFamiliares && (
                         <View style={{ marginBottom: 10 }}>
                             <Text style={styles.label}>Antecedentes Familiares:</Text>
-                            <Text style={styles.value}>{stripHtml(data.antecedentesFamiliares)}</Text>
+                            <Text style={styles.value}>{stripHtml(antFamiliares)}</Text>
                         </View>
                     )}
 
-                    {data.habitos && data.habitos !== 'N/A' && (
+                    {data.habitos && (
                         <View style={{ marginBottom: 10 }}>
                             <Text style={styles.label}>Hábitos Psicobiológicos:</Text>
-                            <Text style={styles.value}>{stripHtml(data.habitos)}</Text>
+                            <Text style={styles.value}>
+                                {typeof data.habitos === 'string'
+                                    ? stripHtml(data.habitos)
+                                    : stripHtml((data.habitos as any).descripcion || 'N/A')}
+                            </Text>
                         </View>
                     )}
                 </View>
@@ -223,23 +262,23 @@ export const MedicalReportPDF = ({ data, patient, doctor }: MedicalReportPDFProp
                 {(data.examenFisico || data.datosEspecificos) && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>IV. Examen Físico y Datos Específicos</Text>
-                        
+
                         {data.examenFisico && Object.keys(data.examenFisico).length > 0 && (
                             <View style={[styles.card, { padding: 8, marginBottom: 8 }]}>
-                                <Text style={[styles.label, { marginBottom: 6 }]}>Examen Físico:</Text>
+                                <Text style={[styles.label, { marginBottom: 6, fontSize: 10 }]}>Examen Físico / Constantes Vitales:</Text>
                                 <View style={styles.grid}>
                                     {Object.entries(data.examenFisico)
                                         .filter(([key]) => key !== 'otros')
                                         .map(([key, val]) => (
-                                            <View key={key} style={styles.gridItem}>
-                                                <Text style={{ fontSize: 9, color: '#64748b' }}>{key.replace(/([A-Z])/g, ' $1').toUpperCase()}:</Text>
-                                                <Text style={styles.value}>{String(val)}</Text>
+                                            <View key={key} style={[styles.gridItem, { width: '33%', marginBottom: 8 }]}>
+                                                <Text style={{ fontSize: 8, color: '#64748b', fontWeight: 'bold' }}>{formatPdfLabel(key)}:</Text>
+                                                <Text style={[styles.value, { marginTop: 1 }]}>{String(val)}</Text>
                                             </View>
                                         ))}
                                 </View>
-                                {data.examenFisico.otros && data.examenFisico.otros !== 'N/A' && (
-                                    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 6 }}>
-                                        <Text style={{ fontSize: 9, color: '#64748b', marginBottom: 2 }}>OTROS HALLAZGOS:</Text>
+                                {data.examenFisico.otros && data.examenFisico.otros !== 'N/A' && data.examenFisico.otros !== '' && (
+                                    <View style={{ marginTop: 4, borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 6 }}>
+                                        <Text style={{ fontSize: 8, color: '#64748b', fontWeight: 'bold', marginBottom: 2 }}>OTROS:</Text>
                                         <Text style={styles.value}>{stripHtml(data.examenFisico.otros)}</Text>
                                     </View>
                                 )}

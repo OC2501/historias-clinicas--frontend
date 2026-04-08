@@ -25,11 +25,7 @@ export const clinicalHistorySchema = z.object({
     peso: z.string().optional(),
     altura: z.string().optional(),
     imc: z.string().optional(),
-    perimetroAbdominal: z.string().optional(),
-    torax: z.string().optional(),
     saturacionOxigeno: z.string().optional(),
-    neurologico: z.string().optional(),
-    extremidades: z.string().optional(),
     otros: z.string().optional(),
 
     // Plan de Manejo
@@ -38,8 +34,9 @@ export const clinicalHistorySchema = z.object({
 
     formData: z.object({
         datosEspecificos: z.record(z.string(), z.any()).optional(),
-        antecedentesPersonales: z.record(z.string(), z.any()).optional(),
-        habitos: z.record(z.string(), z.any()).optional(),
+        antecedentesFamiliares: z.string().optional(),
+        antecedentesPersonales: z.string().optional(),
+        habitos: z.string().optional(),
     }).optional(),
 });
 

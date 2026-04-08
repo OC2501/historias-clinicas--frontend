@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Search, FileDown } from 'lucide-react';
+import { Search, FileDown, FileText } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,28 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable } from '@/components/tables/DataTable';
 import { getClinicalHistoryNoteColumns } from '@/features/clinical-history/components/ClinicalHistoryNoteColumns';
-import { clinicalHistoryNoteApi, doctorsApi } from '@/api';
+import { getClinicalHistoryColumns } from '@/features/clinical-history/components/ClinicalHistoryColumns';
+import { ClinicalHistoryNotePrintModal } from './ClinicalHistoryNotePrintModal';
+import { clinicalHistoryNoteApi, doctorsApi, clinicalHistoryApi } from '@/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export function ClinicalHistoryNoteListPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
-    const columns = getClinicalHistoryNoteColumns(navigate);
+    const [selectedNote, setSelectedNote] = useState<any>(null);
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const [isSelectModalOpen, setIsSelectModalOpen] = useState(false);
+
+    const handlePrintRequest = (note: any) => {
+        setSelectedNote(note);
+        setIsPrintModalOpen(true);
+    };
+
+    const columns = getClinicalHistoryNoteColumns(navigate, handlePrintRequest);
 
     const { data: response, isLoading: isLoadingNotes } = useQuery({
         queryKey: ['clinical-history-notes'],
-        queryFn: () => clinicalHistoryNoteApi.getAll({ 
+        queryFn: () => clinicalHistoryNoteApi.getAll({
             limit: 500
         }),
     });
@@ -69,9 +81,9 @@ export function ClinicalHistoryNoteListPage() {
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" className="w-full sm:w-auto">
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Exportar
+                    <Button className="w-full sm:w-auto bg-primary text-primary-foreground" onClick={() => setIsSelectModalOpen(true)}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Nueva Nota
                     </Button>
                 </div>
             </div>
@@ -103,6 +115,65 @@ export function ClinicalHistoryNoteListPage() {
                     />
                 </CardContent>
             </Card>
+
+            <ClinicalHistoryNotePrintModal
+                isOpen={isPrintModalOpen}
+                onOpenChange={setIsPrintModalOpen}
+                note={selectedNote}
+            />
+            {/* Selection Modal for Clinical Histories */}
+            <Dialog open={isSelectModalOpen} onOpenChange={setIsSelectModalOpen}>
+                <DialogContent className="sm:max-w-[800px] rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl">Seleccionar Historia Clínica</DialogTitle>
+                        <DialogDescription className="text-sm">
+                            Elija la historia clínica a la que desea agregar una nueva nota.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <HistorySelectionTable onSelect={(id) => {
+                        setIsSelectModalOpen(false);
+                        navigate(`/clinical-history/notes/new?historyId=${id}`);
+                    }} />
+                </DialogContent>
+            </Dialog>
         </div>
+    );
+}
+
+// Helper component for selecting a clinical history
+function HistorySelectionTable({ onSelect }: { onSelect: (id: string) => void }) {
+    const { data: response, isLoading } = useQuery({
+        queryKey: ['clinical-histories'],
+        queryFn: () => clinicalHistoryApi.getAll({ limit: 500 }),
+    });
+
+    const histories = useMemo(() => response?.data?.data || [], [response]);
+
+    const columns = getClinicalHistoryColumns(
+        // navigate is not needed inside the table, provide dummy
+        () => { },
+        undefined,
+        undefined
+    ).map(col => {
+        // Replace the default actions column with a simple select button
+        if (col.header === 'Acciones') {
+            return {
+                ...col,
+                accessorKey: (history: any) => (
+                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); onSelect(history.id); }}>
+                        Seleccionar
+                    </Button>
+                ),
+            };
+        }
+        return col;
+    });
+
+    return (
+        <DataTable
+            columns={columns}
+            data={histories}
+            isLoading={isLoading}
+        />
     );
 }

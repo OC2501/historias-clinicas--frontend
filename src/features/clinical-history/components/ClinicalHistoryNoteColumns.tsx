@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Eye, MoreHorizontal } from 'lucide-react';
+import { Eye, MoreHorizontal, Printer } from 'lucide-react';
 import type { ClinicalHistoryNote } from '@/types';
 import {
     DropdownMenu,
@@ -14,7 +14,10 @@ export interface Column<T> {
     accessorKey: keyof T | ((item: T) => React.ReactNode);
 }
 
-export const getClinicalHistoryNoteColumns = (navigate: (path: string) => void): Column<ClinicalHistoryNote>[] => [
+export const getClinicalHistoryNoteColumns = (
+    navigate: (path: string) => void,
+    onPrint?: (note: ClinicalHistoryNote) => void
+): Column<ClinicalHistoryNote>[] => [
     {
         header: 'Fecha',
         accessorKey: (note) => note?.fecha ? format(new Date(note.fecha), 'dd/MM/yyyy') : 'S/F',
@@ -49,6 +52,13 @@ export const getClinicalHistoryNoteColumns = (navigate: (path: string) => void):
                     }}>
                         <Eye className="mr-2 h-4 w-4" />
                         Ver Nota
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        if (onPrint) onPrint(note);
+                    }}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

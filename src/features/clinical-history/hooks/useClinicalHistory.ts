@@ -1,12 +1,25 @@
 import { useState, useMemo } from 'react';
 import { useParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clinicalHistoryApi, doctorsApi } from '@/api';
+import { toast } from 'sonner';
 
 
 export function useClinicalHistory() {
     const { id } = useParams<{ id: string }>();
+    const queryClient = useQueryClient();
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({ initial: true });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => clinicalHistoryApi.delete(id),
+        onSuccess: () => {
+            toast.success('Historia clínica eliminada correctamente');
+            queryClient.invalidateQueries({ queryKey: ['clinical-histories'] });
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Error al eliminar la historia clínica');
+        }
+    });
 
     const { data: historyRes, isLoading: isLoadingHistory } = useQuery({
         queryKey: ['clinical-history', id],
@@ -94,6 +107,8 @@ export function useClinicalHistory() {
         isLoading: isLoadingHistory || isLoadingDoctors,
         expandedEvents,
         toggleExpand,
-        allEvents
+        allEvents,
+        deleteHistory: deleteMutation.mutateAsync,
+        isDeleting: deleteMutation.isPending
     };
 }

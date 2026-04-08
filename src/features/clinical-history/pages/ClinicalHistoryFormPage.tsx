@@ -10,7 +10,6 @@ export function ClinicalHistoryFormPage() {
     const {
         form,
         doctors,
-        template,
         isLoading,
         isSubmitting,
         patientSearch,
@@ -52,7 +51,6 @@ export function ClinicalHistoryFormPage() {
                 form={form}
                 patients={filteredPatients}
                 doctors={doctors}
-                template={template}
                 isSubmitting={isSubmitting}
                 isPatientListOpen={isPatientListOpen}
                 setIsPatientListOpen={setIsPatientListOpen}

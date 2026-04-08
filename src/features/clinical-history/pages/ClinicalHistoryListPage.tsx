@@ -8,12 +8,49 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable } from '@/components/tables/DataTable';
 import { getClinicalHistoryColumns } from '@/features/clinical-history/components/ClinicalHistoryColumns';
+import { ClinicalHistoryPrintModal } from './ClinicalHistoryPrintModal';
 import { clinicalHistoryApi, doctorsApi } from '@/api';
+import { useClinicalHistory } from '../hooks/useClinicalHistory';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function ClinicalHistoryListPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
-    const columns = getClinicalHistoryColumns(navigate);
+    const [selectedHistory, setSelectedHistory] = useState<any>(null);
+    const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [historyToDelete, setHistoryToDelete] = useState<any>(null);
+
+    const { deleteHistory, isDeleting } = useClinicalHistory();
+
+    const handlePrintRequest = (history: any) => {
+        setSelectedHistory(history);
+        setIsPrintModalOpen(true);
+    };
+
+    const handleDeleteRequest = (history: any) => {
+        setHistoryToDelete(history);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (historyToDelete) {
+            await deleteHistory(historyToDelete.id);
+            setIsDeleteDialogOpen(false);
+            setHistoryToDelete(null);
+        }
+    };
+
+    const columns = getClinicalHistoryColumns(navigate, handlePrintRequest, handleDeleteRequest);
 
     const { data: response, isLoading: isLoadingHistories } = useQuery({
         queryKey: ['clinical-histories'],
@@ -69,10 +106,6 @@ export function ClinicalHistoryListPage() {
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" className="w-full sm:w-auto">
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Exportar
-                    </Button>
                     <Button onClick={() => navigate('/clinical-history/new')} className="w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" />
                         Nueva Historia
@@ -107,6 +140,37 @@ export function ClinicalHistoryListPage() {
                     />
                 </CardContent>
             </Card>
+
+            <ClinicalHistoryPrintModal
+                isOpen={isPrintModalOpen}
+                onOpenChange={setIsPrintModalOpen}
+                history={selectedHistory}
+            />
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente la
+                            historia clínica del servidor.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                confirmDelete();
+                            }}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

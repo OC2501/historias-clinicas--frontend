@@ -6,9 +6,10 @@ import type { ClinicalHistoryNote } from '@/features/clinical-history/types/clin
 export interface FormData {
     motivoConsulta?: string;
     enfermedadActual?: string;
-    antecedentesPersonales?: string;
-    antecedentesFamiliares?: string;
-    habitosPsicobiologicos?: string;
+    antecedentesPersonales?: string | Record<string, any>;
+    antecedentesFamiliares?: string | Record<string, any>;
+    habitosPsicobiologicos?: string | Record<string, any>;
+    habitos?: string | Record<string, any>;
     diagnosticos?: string[];
     planManejo?: Record<string, any>;
     datosEspecificos?: Record<string, any>;
@@ -22,13 +23,10 @@ export interface ClinicalHistory {
     templateId?: string;
     motivoConsulta?: string;
     enfermedadActual?: string;
-    antecedentesPersonales?: string;
-    antecedentesFamiliares?: string;
-    habitos?: string;
-    examenFisico?: {
-        signosVitales: any;
-        hallazgosPorSistema: Record<string, any>;
-    };
+    antecedentesPersonales?: string | Record<string, any>;
+    antecedentesFamiliares?: string | Record<string, any>;
+    habitos?: string | Record<string, any>;
+    examenFisico?: Record<string, any>;
     datosEspecificos?: Record<string, any>;
     diagnosticos?: string[];
     planManejo?: any;

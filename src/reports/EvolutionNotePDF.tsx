@@ -103,25 +103,41 @@ const styles = StyleSheet.create({
     },
 });
 
+const stripHtml = (html: string | undefined | null) => {
+    if (!html) return 'No registrado';
+    return String(html)
+        .replace(/<p[^>]*>/g, '')
+        .replace(/<\/p>/g, '\n')
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<li[^>]*>/g, '• ')
+        .replace(/<\/li>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim() || 'No registrado';
+};
+
 interface EvolutionNotePDFProps {
-    data: {
-        estadoSubjetivo: string;
-        cambiosSintomas?: string;
-        proximaCita?: string;
-    };
-    seguimiento: {
-        peso?: string;
-        presionArterial?: string;
-    };
-    planAjustado: {
-        medicacion?: string;
-        indicaciones?: string;
-    };
+    note?: any;
+    data?: any;
+    seguimiento?: any;
+    planAjustado?: any;
 }
 
-export const EvolutionNotePDF = ({ data, seguimiento, planAjustado }: EvolutionNotePDFProps) => {
+export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguimiento, planAjustado: propPlanAjustado }: EvolutionNotePDFProps) => {
     const today = new Date();
     const formattedDate = format(today, "dd 'de' MMMM, yyyy", { locale: es });
+
+    // Handle both ClinicalHistoryNote and ClinicalHistory (fallback)
+    // We use propData if provided (from spreading data sections) or extract from note
+    const data = propData || {
+        estadoSubjetivo: note?.estadoSubjetivo || note?.motivoConsulta || '',
+        cambiosSintomas: note?.cambiosSintomas || note?.enfermedadActual || '',
+        proximaCita: note?.proximaCita || ''
+    };
+
+    // For Clinical history fallback, seguimiento and planAjustado might be in formData or passed as props
+    const seguimiento = propSeguimiento || note?.seguimiento || note?.formData?.examenFisico || {};
+    const planAjustado = propPlanAjustado || note?.planAjustado || note?.formData?.planManejo || {};
 
     const formatProximaCita = (dateStr?: string) => {
         if (!dateStr) return null;
@@ -132,8 +148,12 @@ export const EvolutionNotePDF = ({ data, seguimiento, planAjustado }: EvolutionN
         }
     };
 
-    const hasSeguimiento = seguimiento.peso || seguimiento.presionArterial;
-    const hasPlan = planAjustado.medicacion || planAjustado.indicaciones;
+    const hasSeguimiento = (seguimiento.peso && seguimiento.peso !== 'N/A') || 
+                          (seguimiento.presionArterial && seguimiento.presionArterial !== 'N/A');
+    
+    const hasPlan = (planAjustado.medicacion && planAjustado.medicacion !== 'Ninguna') || 
+                    (planAjustado.indicaciones && planAjustado.indicaciones !== 'Ninguna') ||
+                    (planAjustado.examenes && planAjustado.examenes !== 'Ninguno');
 
     return (
         <Document title="Nota de Evolución">
@@ -147,37 +167,43 @@ export const EvolutionNotePDF = ({ data, seguimiento, planAjustado }: EvolutionN
                     <Text style={styles.headerDate}>{formattedDate}</Text>
                 </View>
 
-                {/* II. Anamnesis de Evolución */}
+                {/* I. Anamnesis de Evolución */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>I. Anamnesis de Evolución</Text>
                     <View style={{ marginBottom: 10 }}>
                         <Text style={styles.label}>Estado Subjetivo:</Text>
-                        <Text style={styles.value}>{data.estadoSubjetivo || 'No registrado'}</Text>
+                        <Text style={styles.value}>{stripHtml(data.estadoSubjetivo)}</Text>
                     </View>
-                    {data.cambiosSintomas && (
+                    {data.cambiosSintomas && data.cambiosSintomas !== 'No registrado' && (
                         <View>
-                            <Text style={styles.label}>Cambios en los Síntomas:</Text>
-                            <Text style={styles.value}>{data.cambiosSintomas}</Text>
+                            <Text style={styles.label}>Cambios en los Síntomas / Hallazgos:</Text>
+                            <Text style={styles.value}>{stripHtml(data.cambiosSintomas)}</Text>
                         </View>
                     )}
                 </View>
 
-                {/* III. Datos de Seguimiento */}
+                {/* II. Datos de Seguimiento */}
                 {hasSeguimiento && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>II. Datos de Seguimiento</Text>
                         <View style={styles.card}>
                             <View style={styles.grid}>
-                                {seguimiento.peso && (
+                                {seguimiento.peso && seguimiento.peso !== 'N/A' && (
                                     <View style={styles.gridItem}>
                                         <Text style={styles.label}>Peso (kg):</Text>
                                         <Text style={styles.value}>{seguimiento.peso}</Text>
                                     </View>
                                 )}
-                                {seguimiento.presionArterial && (
+                                {seguimiento.presionArterial && seguimiento.presionArterial !== 'N/A' && (
                                     <View style={styles.gridItem}>
                                         <Text style={styles.label}>Presión Arterial (mmHg):</Text>
                                         <Text style={styles.value}>{seguimiento.presionArterial}</Text>
+                                    </View>
+                                )}
+                                {seguimiento.frecuenciaCardiaca && seguimiento.frecuenciaCardiaca !== 'N/A' && (
+                                    <View style={styles.gridItem}>
+                                        <Text style={styles.label}>Frec. Cardíaca (lpm):</Text>
+                                        <Text style={styles.value}>{seguimiento.frecuenciaCardiaca}</Text>
                                     </View>
                                 )}
                             </View>
@@ -185,21 +211,27 @@ export const EvolutionNotePDF = ({ data, seguimiento, planAjustado }: EvolutionN
                     </View>
                 )}
 
-                {/* V. Plan Ajustado */}
+                {/* III. Plan Ajustado */}
                 {hasPlan && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>III. Plan Ajustado</Text>
                         <View style={styles.highlightCard}>
-                            {planAjustado.medicacion && (
+                            {(planAjustado.medicacion && planAjustado.medicacion !== 'Ninguna') && (
                                 <View style={{ marginBottom: 8 }}>
                                     <Text style={styles.label}>Medicamentos / Tratamiento:</Text>
-                                    <Text style={styles.value}>{planAjustado.medicacion}</Text>
+                                    <Text style={styles.value}>{stripHtml(planAjustado.medicacion)}</Text>
                                 </View>
                             )}
-                            {planAjustado.indicaciones && (
-                                <View>
+                            {(planAjustado.indicaciones && planAjustado.indicaciones !== 'Ninguna') && (
+                                <View style={{ marginBottom: 8 }}>
                                     <Text style={styles.label}>Indicaciones Generales:</Text>
-                                    <Text style={styles.value}>{planAjustado.indicaciones}</Text>
+                                    <Text style={styles.value}>{stripHtml(planAjustado.indicaciones)}</Text>
+                                </View>
+                            )}
+                            {(planAjustado.examenes && planAjustado.examenes !== 'Ninguno') && (
+                                <View>
+                                    <Text style={styles.label}>Exámenes Solicitados:</Text>
+                                    <Text style={styles.value}>{stripHtml(planAjustado.examenes)}</Text>
                                 </View>
                             )}
                         </View>
