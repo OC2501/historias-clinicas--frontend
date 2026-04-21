@@ -1,15 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -70,6 +62,11 @@ export function SchedulePage() {
     const queryClient = useQueryClient();
     const [isOpen, setIsOpen] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
+
+    // Paginación
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
 
     const form = useForm<ScheduleFormValues>({
         resolver: zodResolver(scheduleSchema),
@@ -84,30 +81,48 @@ export function SchedulePage() {
 
     // Queries
     const { data: schedulesRes, isLoading: isLoadingSchedules } = useQuery({
-        queryKey: ['schedules'],
-        queryFn: () => schedulesApi.getAll({ limit: 100 }),
+        queryKey: ['schedules', page, limit],
+        queryFn: async () => {
+            const res = await schedulesApi.getAll({ page, limit });
+            return res.data;
+        },
     });
 
     const { data: doctorsRes, isLoading: isLoadingDoctors } = useQuery({
         queryKey: ['doctors'],
-        queryFn: () => doctorsApi.getAll(),
+        queryFn: async () => {
+            const res = await doctorsApi.getAll();
+            return res.data;
+        },
     });
 
     const { data: roomsRes, isLoading: isLoadingRooms } = useQuery({
         queryKey: ['rooms'],
-        queryFn: () => consultingRoomsApi.getAll(),
+        queryFn: async () => {
+            const res = await consultingRoomsApi.getAll();
+            return res.data;
+        },
     });
 
-    const doctors = doctorsRes?.data?.data || [];
-    const rooms = roomsRes?.data?.data || [];
+    const doctors = doctorsRes?.data || [];
+    const rooms = roomsRes?.data || [];
+    const meta = useMemo(() => {
+        if (!schedulesRes) return null;
+        return schedulesRes.meta || {
+            total: (schedulesRes as any).total || 0,
+            lastPage: (schedulesRes as any).lastPage || 1,
+            page: (schedulesRes as any).page || page,
+            limit: (schedulesRes as any).limit || limit
+        };
+    }, [schedulesRes, page, limit]);
 
     // Cruzar datos para asegurar que los médicos tengan su nombre (User)
-    const schedules = useMemo(() => {
-        const rawData = (schedulesRes as any)?.data?.data || (schedulesRes as any)?.data || [];
+    const schedulesData = useMemo(() => {
+        const rawData = schedulesRes?.data || [];
         if (!Array.isArray(rawData)) return [];
 
-        return rawData.map((s: any) => {
-            // Si el doctor en el horario NO tiene user.name, lo buscamos en la lista completa
+        // 1. Cross-reference doctor data
+        const mapped = rawData.map((s: any) => {
             if (!s.doctor?.user?.name && doctors.length > 0) {
                 const fullDoctor = doctors.find((d: any) => d.id === s.doctor?.id);
                 if (fullDoctor?.user) {
@@ -122,12 +137,27 @@ export function SchedulePage() {
             }
             return s;
         });
-    }, [schedulesRes, doctors]);
+
+        // 2. Local Filtering
+        if (!search) return mapped;
+        const lowerSearch = search.toLowerCase();
+        return mapped.filter((s: any) => {
+            const docName = (s.doctor?.user?.name || '').toLowerCase();
+            const roomName = (s.consultingRoom?.nombre || '').toLowerCase();
+            const dayLabel = (DAYS_OF_WEEK.find(d => d.value === s.diaSemana)?.label || '').toLowerCase();
+            const timeRange = `${s.horaInicio} - ${s.horaFin}`.toLowerCase();
+
+            return docName.includes(lowerSearch) ||
+                roomName.includes(lowerSearch) ||
+                dayLabel.includes(lowerSearch) ||
+                timeRange.includes(lowerSearch);
+        });
+    }, [schedulesRes, doctors, search]);
 
     // Pre-seleccionar doctor si el usuario es DOCTOR
     useMemo(() => {
-        if (user?.role === 'DOCTOR' && doctors.length > 0) {
-            const doctor = doctors.find((d: any) => d.user?.id === user.id);
+        if ((user?.organizationRole || user?.systemRole) === 'DOCTOR' && doctors.length > 0) {
+            const doctor = doctors.find((d: any) => d.user?.id === user?.id);
             if (doctor && !form.getValues('doctorId')) {
                 form.setValue('doctorId', doctor.id);
             }
@@ -157,7 +187,7 @@ export function SchedulePage() {
         onError: (error: any) => {
             const message = error.response?.data?.message;
             if (Array.isArray(message)) {
-                toast.error(message[0]); 
+                toast.error(message[0]);
             } else {
                 toast.error(message || 'Error al crear horario');
             }
@@ -211,7 +241,7 @@ export function SchedulePage() {
                         </DialogHeader>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                                {user?.role !== 'DOCTOR' && (
+                                {(user?.organizationRole || user?.systemRole) !== 'DOCTOR' && (
                                     <FormField
                                         control={form.control}
                                         name="doctorId"
@@ -227,7 +257,7 @@ export function SchedulePage() {
                                                     <SelectContent className="rounded-xl">
                                                         {doctors.map((doc: any) => (
                                                             <SelectItem key={doc.id} value={doc.id}>
-                                                                {doc.user?.name || `Dr. ${doc.specialty || doc.id.substring(0,8)}`}
+                                                                {doc.user?.name || `Dr. ${doc.specialty || doc.id.substring(0, 8)}`}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -328,19 +358,31 @@ export function SchedulePage() {
                 </Dialog>
             </div>
 
-            <Card className="border-none shadow-sm overflow-hidden">
-                <CardHeader>
-                    <CardTitle>Horarios Registrados</CardTitle>
-                    <CardDescription>Lista completa de turnos y disponibilidades.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <DataTable
-                        columns={getScheduleColumns(setDeleteId)}
-                        data={schedules}
-                        isLoading={isLoading}
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por médico, consultorio o día..."
+                        className="pl-8"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                     />
-                </CardContent>
-            </Card>
+                </div>
+            </div>
+
+            <DataTable
+                columns={getScheduleColumns(setDeleteId)}
+                data={schedulesData}
+                isLoading={isLoading}
+                pagination={meta ? {
+                    currentPage: page,
+                    totalPages: meta.lastPage,
+                    pageSize: limit,
+                    totalItems: meta.total,
+                    onPageChange: setPage,
+                    onPageSizeChange: setLimit
+                } : undefined}
+            />
 
             <ConfirmDialog
                 open={!!deleteId}

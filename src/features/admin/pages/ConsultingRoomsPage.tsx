@@ -1,17 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Plus,
     Loader2,
+    Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription
-} from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 
 import {
@@ -49,7 +44,15 @@ export function ConsultingRoomsPage() {
     const [isOpen, setIsOpen] = useState(false);
     const [editingRoom, setEditingRoom] = useState<ConsultingRoom | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
     const { user } = useAuth();
+
+    // Paginación
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [meta, setMeta] = useState<any>(null);
+
+    const canManage = user?.organizationRole === 'OWNER' || user?.organizationRole === 'ADMIN' || user?.systemRole === 'SUPERADMIN' || (user?.organizationRole === 'DOCTOR' && user?.organization?.planType === 'INDEPENDENT');
 
     const form = useForm<RoomFormValues>({
         resolver: zodResolver(consultingRoomSchema),
@@ -64,8 +67,12 @@ export function ConsultingRoomsPage() {
     const loadRooms = async () => {
         setIsLoading(true);
         try {
-            const res = await consultingRoomsApi.getAll({ page: 1, limit: 100 });
-            setRooms(res.data.data);
+            const res = await consultingRoomsApi.getAll({ page, limit });
+            setRooms(res.data.data || res.data || []);
+            setMeta(res.data.meta || {
+                total: (res.data as any).total || 0,
+                lastPage: (res.data as any).lastPage || 1
+            });
         } catch (error) {
             toast.error('Error al cargar consultorios');
         } finally {
@@ -75,7 +82,21 @@ export function ConsultingRoomsPage() {
 
     useEffect(() => {
         loadRooms();
-    }, []);
+    }, [page, limit]);
+
+    const filteredRooms = useMemo(() => {
+        if (!search) return rooms;
+        const lowerSearch = search.toLowerCase();
+        return rooms.filter((r) =>
+            r.nombre.toLowerCase().includes(lowerSearch) ||
+            (r.ubicacion || '').toLowerCase().includes(lowerSearch)
+        );
+    }, [rooms, search]);
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
+        setPage(1);
+    };
 
     const onSubmit = async (values: RoomFormValues) => {
         setIsSubmitting(true);
@@ -139,7 +160,7 @@ export function ConsultingRoomsPage() {
         form.reset();
     };
 
-    if (isLoading) return <div className="p-8 text-center text-muted-foreground">Cargando...</div>;
+    if (isLoading && rooms.length === 0) return <div className="p-8 text-center text-muted-foreground">Cargando...</div>;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -150,26 +171,40 @@ export function ConsultingRoomsPage() {
                         Administre la disponibilidad física del centro médico.
                     </p>
                 </div>
-                <Button onClick={handleCreate} className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nuevo Consultorio
-                </Button>
+                {canManage && (
+                    <Button onClick={handleCreate} className="w-full sm:w-auto">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nuevo Consultorio
+                    </Button>
+                )}
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Espacios Disponibles</CardTitle>
-                    <CardDescription>Lista de consultorios registrados en el sistema.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <DataTable
-                        columns={getConsultingRoomColumns(handleEdit, setDeleteId)}
-                        data={rooms}
-                        isLoading={isLoading}
-                        onRowClick={handleEdit}
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por nombre o ubicación..."
+                        className="pl-8"
+                        value={search}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                     />
-                </CardContent>
-            </Card>
+                </div>
+            </div>
+
+            <DataTable
+                columns={getConsultingRoomColumns(handleEdit, setDeleteId, canManage)}
+                data={filteredRooms}
+                isLoading={isLoading}
+                onRowClick={canManage ? handleEdit : undefined}
+                pagination={meta ? {
+                    currentPage: page,
+                    totalPages: meta.lastPage,
+                    pageSize: limit,
+                    totalItems: meta.total,
+                    onPageChange: setPage,
+                    onPageSizeChange: setLimit
+                } : undefined}
+            />
 
             <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
                 <DialogContent>

@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
+import { PatientStatusBadge } from '@/features/patient/components/PatientStatusBadge';
+
 export interface Column<T> {
     header: string;
     accessorKey: keyof T | ((item: T) => React.ReactNode);
@@ -33,7 +35,15 @@ export const getClinicalHistoryNoteColumns = (
 
     {
         header: 'Próxima Cita',
-        accessorKey: (note) => note?.proximaCita ? format(new Date(note.proximaCita), 'dd/MM/yyyy') : 'Ninguna',
+        accessorKey: (note) => {
+            if (note?.proximaCita) {
+                return format(new Date(note.proximaCita), 'dd/MM/yyyy');
+            }
+            if (note?.isDischarge) {
+                return <PatientStatusBadge status="DISCHARGED" className="scale-90 origin-left" />;
+            }
+            return <span className="text-muted-foreground opacity-50">Ninguna</span>;
+        },
     },
     {
         header: 'Acciones',

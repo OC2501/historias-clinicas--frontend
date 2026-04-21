@@ -21,6 +21,7 @@ import { patientsApi } from '@/api';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Patient } from '@/types';
+import { PatientStatusBadge } from './PatientStatusBadge';
 
 interface PatientDetailHeaderProps {
     patient: Patient;
@@ -108,6 +109,7 @@ export function PatientDetailHeader({ patient }: PatientDetailHeaderProps) {
                         <Badge variant="outline" className="px-3 py-1 font-semibold text-muted-foreground shadow-none">
                             {patient.gender === 'MALE' ? 'M' : 'F'} – {safeFormat(patient.birthDate, 'dd MMM yyyy')}
                         </Badge>
+                        <PatientStatusBadge status={patient.status} />
                     </div>
                 </div>
             </div>
@@ -185,7 +187,10 @@ export function PatientGeneralInfo({ patient }: { patient: Patient }) {
                     <InfoItem label="Documento de Identidad" value={patient.identificationNumber} />
                     <InfoItem label="Fecha de Nacimiento" value={safeFormat(patient.birthDate, 'dd/MM/yyyy')} />
                     <InfoItem label="Género" value={patient.gender === 'MALE' ? 'Masculino' : 'Femenino'} />
-                    <InfoItem label="Estado del Paciente" value="Activo" status="success" />
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Estado del Paciente</p>
+                        <PatientStatusBadge status={patient.status} />
+                    </div>
                     <InfoItem label="Correo Electrónico" value={patient.email || 'No registrado'} />
 
                 </CardContent>

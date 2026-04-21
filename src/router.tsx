@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { ProtectedRoute } from '@/guards/ProtectedRoute';
 import { RoleGuard } from '@/guards/RoleGuard';
-import { UserRole } from '@/types';
+import { SystemRole, OrganizationRole } from '@/types';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { MainLayout } from '@/components/layout/MainLayout';
 
@@ -38,6 +38,9 @@ import { SchedulePage } from '@/features/admin/pages/SchedulePage';
 import { ConsultingRoomsPage } from '@/features/admin/pages/ConsultingRoomsPage';
 import { SpecialtyTemplatesPage } from '@/features/admin/pages/SpecialtyTemplatesPage';
 import { UsersPage } from '@/features/admin/pages/UsersPage';
+import ProfilePage from '@/features/admin/pages/ProfilePage';
+import AuditoriaPage from '@/features/admin/pages/AuditoriaPage';
+import GeneralReportsPage from '@/features/general-reports/pages/GeneralReportsPage';
 
 export const router = createBrowserRouter([
     // Rutas públicas (Auth)
@@ -76,7 +79,7 @@ export const router = createBrowserRouter([
 
                     // Historias Clínicas (Solo DOCTOR / ADMIN)
                     {
-                        element: <RoleGuard roles={[UserRole.DOCTOR, UserRole.ADMIN]} />,
+                        element: <RoleGuard roles={[OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, SystemRole.SUPERADMIN]} />,
                         children: [
                             { path: '/clinical-history', element: <ClinicalHistoryListPage /> },
                             { path: '/clinical-history/new', element: <ClinicalHistoryFormPage /> },
@@ -94,12 +97,15 @@ export const router = createBrowserRouter([
                     { path: '/settings/schedule', element: <SchedulePage /> },
                     { path: '/settings/rooms', element: <ConsultingRoomsPage /> },
                     { path: '/settings/templates', element: <SpecialtyTemplatesPage /> },
+                    { path: '/settings/profile', element: <ProfilePage /> },
+                    { path: '/settings/reports', element: <GeneralReportsPage /> },
 
-                    // Solo ADMIN
+                    // Solo ADMIN u OWNER
                     {
-                        element: <RoleGuard roles={[UserRole.ADMIN]} />,
+                        element: <RoleGuard roles={[OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN]} />,
                         children: [
                             { path: '/settings/users', element: <UsersPage /> },
+                            { path: '/settings/audit', element: <AuditoriaPage /> },
                         ],
                     },
 

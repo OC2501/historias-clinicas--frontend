@@ -63,7 +63,7 @@ export function ClinicalHistoryFormPage() {
                 addDiagnostic={addDiagnostic}
                 removeDiagnostic={removeDiagnostic}
                 onSubmit={onSubmit}
-                userRole={user?.role}
+                userRole={(user?.organizationRole || user?.systemRole)}
                 showPDF={showPDF}
                 setShowPDF={setShowPDF}
                 filteredPatients={filteredPatients}

@@ -1,4 +1,4 @@
-import { UserRole } from '@/types/enums';
+import { OrganizationPlanType, OrganizationRole } from '@/types/enums';
 import type { User } from '@/types';
 
 // ===== AUTH =====
@@ -11,7 +11,12 @@ export interface RegisterRequest {
     email: string;
     password: string;
     name: string;
-    role: UserRole;
+    phone?: string;
+    planType: OrganizationPlanType;
+    organizationName?: string;
+    organizationType?: string;
+    organizationSize?: string;
+    organizationRole?: OrganizationRole;
 }
 
 export interface LoginResponse {

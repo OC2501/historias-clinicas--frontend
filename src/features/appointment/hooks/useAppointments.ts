@@ -6,28 +6,38 @@ import { startOfWeek, addDays, isSameDay } from 'date-fns';
 export function useAppointments() {
     const [view, setView] = useState<'list' | 'calendar'>('list');
     const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
     const [currentDate, setCurrentDate] = useState(new Date());
 
+    // Query para obtener citas con paginación
     const { data: response, isLoading: isLoadingAppointments } = useQuery({
-        queryKey: ['appointments'],
-        queryFn: () => appointmentsApi.getAll({ 
-            limit: 500
-        }),
+        queryKey: ['appointments', page, limit, view],
+        queryFn: async () => {
+            const res = await appointmentsApi.getAll({ 
+                page,
+                limit: view === 'calendar' ? 500 : limit
+            });
+            return res.data;
+        },
     });
 
     const { data: doctorsRes, isLoading: isLoadingDoctors } = useQuery({
         queryKey: ['doctors'],
-        queryFn: () => doctorsApi.getAll(),
+        queryFn: async () => {
+            const res = await doctorsApi.getAll();
+            return res.data;
+        },
     });
 
-    const doctors = useMemo(() => doctorsRes?.data?.data || [], [doctorsRes]);
+    const doctors = useMemo(() => doctorsRes?.data || [], [doctorsRes]);
 
     const appointments = useMemo(() => {
-        const rawData = response?.data?.data || [];
+        const rawData = response?.data || [];
         if (!Array.isArray(rawData)) return [];
 
-        // Cross-reference doctor data to ensure names are present
-        return rawData.map((app: any) => {
+        // 1. Cross-reference doctor data to ensure names are present
+        const processed = rawData.map((app: any) => {
             if (!app.doctor?.user?.name && doctors.length > 0) {
                 const fullDoctor = doctors.find((d: any) => d.id === app.doctor?.id);
                 if (fullDoctor?.user) {
@@ -42,17 +52,35 @@ export function useAppointments() {
             }
             return app;
         });
-    }, [response, doctors]);
 
-    const filteredAppointments = useMemo(() => {
-        const search = searchTerm.toLowerCase();
-        return appointments.filter(app =>
-            app.patient.firstName.toLowerCase().includes(search) ||
-            app.patient.lastName.toLowerCase().includes(search) ||
-            app.patient.identificationNumber?.includes(searchTerm) ||
-            (app.doctor?.user?.name || '').toLowerCase().includes(search)
-        );
-    }, [appointments, searchTerm]);
+        // 2. Local Filtering
+        if (!searchTerm) return processed;
+        const lowerSearch = searchTerm.toLowerCase();
+        return processed.filter((app: any) => {
+            const patientName = `${app.patient?.firstName || ''} ${app.patient?.lastName || ''}`.toLowerCase();
+            const documentId = (app.patient?.documentId || '').toLowerCase();
+            const doctorName = (app.doctor?.user?.name || '').toLowerCase();
+            
+            return patientName.includes(lowerSearch) || 
+                   documentId.includes(lowerSearch) || 
+                   doctorName.includes(lowerSearch);
+        });
+    }, [response, doctors, searchTerm]);
+
+    const meta = useMemo(() => {
+        if (response?.meta) return response.meta;
+        return {
+            page: page,
+            lastPage: (response as any)?.lastPage || Math.ceil((appointments?.length || 0) / limit) || 1,
+            total: (response as any)?.total || appointments?.length || 0,
+            limit: limit
+        };
+    }, [response, page, limit, appointments]);
+
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setPage(1);
+    };
 
     // Calendar logic
     const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
@@ -66,10 +94,14 @@ export function useAppointments() {
         view,
         setView,
         appointments,
-        filteredAppointments,
+        meta,
         isLoading: isLoadingAppointments || isLoadingDoctors,
         searchTerm,
-        setSearchTerm,
+        setSearchTerm: handleSearchChange,
+        page,
+        setPage,
+        limit,
+        setLimit,
         currentDate,
         weekDays,
         nextWeek,

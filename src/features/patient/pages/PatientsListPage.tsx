@@ -9,7 +9,17 @@ import type { Patient } from '@/types';
 
 export function PatientsListPage() {
     const navigate = useNavigate();
-    const { filteredPatients, isLoading, searchValue, setSearchValue } = usePatients();
+    const { 
+        patients, 
+        meta, 
+        isLoading, 
+        searchValue, 
+        setSearchValue,
+        page,
+        setPage,
+        limit,
+        setLimit 
+    } = usePatients();
 
     const handleRowClick = (patient: Patient) => {
         navigate(`/patients/${patient.id}`);
@@ -47,9 +57,17 @@ export function PatientsListPage() {
 
             <DataTable
                 columns={PatientColumns}
-                data={filteredPatients}
+                data={patients}
                 isLoading={isLoading}
                 onRowClick={handleRowClick}
+                pagination={meta ? {
+                    currentPage: page,
+                    totalPages: meta.lastPage,
+                    pageSize: limit,
+                    totalItems: meta.total,
+                    onPageChange: setPage,
+                    onPageSizeChange: setLimit
+                } : undefined}
             />
         </div>
     );

@@ -5,7 +5,7 @@ import {
     Clock,
     UserPlus,
     ChevronRight,
-    ArrowUpRight,
+    
     Calendar,
     Settings,
     History,
@@ -49,21 +49,32 @@ export function DashboardPage() {
     const { data: dashboardRes, isLoading: isLoadingDashboard } = useQuery({
         queryKey: ['doctor-dashboard'],
         queryFn: () => dashboardApi.getDoctorDashboard(),
-        enabled: user?.role === 'ADMIN' || (user?.role === 'DOCTOR' && !!user?.doctorProfile),
+        enabled: 
+            user?.systemRole === 'SUPERADMIN' || 
+            user?.organizationRole === 'ADMIN' || 
+            user?.organizationRole === 'OWNER' || 
+            user?.organizationRole === 'MEDICAL_DIRECTOR' ||
+            (user?.organizationRole === 'DOCTOR' && !!user?.doctorProfile),
     });
 
     const { data: appointmentsRes, isLoading: isLoadingAppointments } = useQuery({
         queryKey: ['appointments', { limit: 100 }],
-        queryFn: () => appointmentsApi.getAll({ limit: 100 }),
+        queryFn: async () => {
+            const res = await appointmentsApi.getAll({ limit: 100 });
+            return res.data;
+        },
         enabled: !!user,
     });
 
     const { data: doctorsRes, isLoading: isLoadingDoctors } = useQuery({
         queryKey: ['doctors'],
-        queryFn: () => doctorsApi.getAll(),
+        queryFn: async () => {
+            const res = await doctorsApi.getAll();
+            return res.data;
+        },
         enabled: !!user,
     });
-    const doctors = doctorsRes?.data?.data || [];
+    const doctors = doctorsRes?.data || [];
 
     // Extracción robusta de las estadísticas
     const dashboardData = useMemo(() => {
@@ -143,7 +154,8 @@ export function DashboardPage() {
             </div>
 
             {/* Onboarding / Missing Profile Alert */}
-            {user?.role === 'DOCTOR' && !user?.doctorProfile && (
+            {user?.organizationRole === 'DOCTOR' && 
+            (!user?.doctorProfile?.specialty || !user?.doctorProfile?.licenseNumber) && (
                 <Card className="border-none shadow-lg bg-primary text-primary-foreground overflow-hidden mb-6">
                     <CardContent className="p-0">
                         <div className="flex flex-col md:flex-row items-center">

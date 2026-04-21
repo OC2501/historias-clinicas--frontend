@@ -1,7 +1,7 @@
 import type { Appointment } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { Clock, User, ChevronDown, CheckCircle2, XCircle, Calendar } from 'lucide-react';
+import { Clock, User, ChevronDown, CheckCircle2, XCircle, Calendar, DoorOpen } from 'lucide-react';
 import type { Column } from '@/types/table';
 import { Status } from '@/types/enums';
 import {
@@ -47,12 +47,34 @@ export const getAppointmentColumns = (onStatusChange: (id: string, status: Statu
         ),
     },
     {
+        header: 'Fecha',
+        accessorKey: (item) => (
+            <div className="flex items-center gap-2 text-sm">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="whitespace-nowrap">
+                    {format(new Date(item.startTime), 'dd MMM yyyy')}
+                </span>
+            </div>
+        ),
+    },
+    {
         header: 'Horario',
         accessorKey: (item) => (
             <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>
                     {format(new Date(item.startTime), 'HH:mm')} - {format(new Date(item.endTime), 'HH:mm')}
+                </span>
+            </div>
+        ),
+    },
+    {
+        header: 'Consultorio',
+        accessorKey: (item) => (
+            <div className="flex items-center gap-2 text-sm">
+                <DoorOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-medium whitespace-nowrap">
+                    {item.consultingRoom?.nombre || '—'}
                 </span>
             </div>
         ),

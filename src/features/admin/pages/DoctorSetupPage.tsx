@@ -45,13 +45,18 @@ export default function DoctorSetupPage() {
 
         setIsSubmitting(true);
         try {
-            const response = await doctorsApi.create({
-                userId: user.id,
-                ...values,
-            });
+            let response;
+            if (user.doctorProfile?.id) {
+                response = await doctorsApi.update(user.doctorProfile.id, values);
+            } else {
+                response = await doctorsApi.create({
+                    userId: user.id,
+                    ...values,
+                });
+            }
 
             // Actualizamos el usuario localmente con el nuevo perfil
-            // El backend devuelve el perfil creado en response.data.data
+            // El backend devuelve el perfil creado o actualizado en response.data.data
             const doctorProfile = response.data;
             const updatedUser = {
                 ...user,

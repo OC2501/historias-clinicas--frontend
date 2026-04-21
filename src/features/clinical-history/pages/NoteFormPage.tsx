@@ -10,7 +10,10 @@ import {
     User,
     Stethoscope,
     Calendar,
-    Save
+    Save,
+    Clock,
+    DoorOpen,
+    CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,10 +30,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
-import { clinicalHistoryNoteApi, clinicalHistoryApi, specialtiesApi } from '@/api';
-import type { ClinicalHistory, SpecialtyTemplate } from '@/types';
+import { clinicalHistoryNoteApi, clinicalHistoryApi, specialtiesApi, consultingRoomsApi } from '@/api';
+import type { ClinicalHistory, SpecialtyTemplate, ConsultingRoom } from '@/types';
 import { DynamicForm } from '../components/DynamicForm';
+import { PatientStatusBadge } from '@/features/patient/components/PatientStatusBadge';
 
 import { noteSchema, type NoteFormValues } from '../types/clinical-history.schema';
 
@@ -42,6 +54,7 @@ export function NoteFormPage() {
 
     const [history, setHistory] = useState<ClinicalHistory | null>(null);
     const [template, setTemplate] = useState<SpecialtyTemplate | null>(null);
+    const [consultingRooms, setConsultingRooms] = useState<ConsultingRoom[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,6 +65,9 @@ export function NoteFormPage() {
             cambiosSintomas: '',
             planAjustado: '',
             proximaCita: '',
+            horaCita: '',
+            consultingRoomId: '',
+            isDischarge: false,
             seguimiento: {},
         },
     });
@@ -84,6 +100,14 @@ export function NoteFormPage() {
                         setTemplate(null);
                     }
                 }
+
+                // Load consulting rooms
+                try {
+                    const crRes = await consultingRoomsApi.getAll({ page: 1, limit: 50 });
+                    setConsultingRooms(crRes.data.data);
+                } catch (e) {
+                    console.error('Error al cargar consultorios');
+                }
             } catch (error) {
                 toast.error('Error al cargar información de la historia clínica');
                 navigate('/clinical-history');
@@ -113,6 +137,9 @@ export function NoteFormPage() {
                 proximaCita: values.proximaCita
                     ? new Date(values.proximaCita).toISOString()
                     : undefined,
+                horaCita: values.horaCita || undefined,
+                consultingRoomId: values.consultingRoomId || undefined,
+                isDischarge: values.isDischarge,
             });
 
             // Invalidar cachés para ver la nota inmediatamente
@@ -177,6 +204,10 @@ export function NoteFormPage() {
                                 <div className="font-medium underline decoration-primary/30">
                                     {history.patient.identificationNumber || 'N/A'}
                                 </div>
+                            </div>
+                            <div className="pt-2 border-t mt-3">
+                                <span className="text-muted-foreground block mb-1">Estado Actual</span>
+                                <PatientStatusBadge status={history.patient.status} />
                             </div>
                         </CardContent>
                     </Card>
@@ -265,10 +296,82 @@ export function NoteFormPage() {
                                                     <FormControl>
                                                         <div className="relative">
                                                             <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                                            <Input type="date" className="pl-10" {...field} />
+                                                            <Input type="date" className="pl-10 h-10" {...field} />
                                                         </div>
                                                     </FormControl>
                                                     <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="horaCita"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Hora de la Cita</FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative">
+                                                            <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                                            <Input type="time" className="pl-10 h-10" {...field} />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="consultingRoomId"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Consultorio</FormLabel>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-10">
+                                                                <div className="flex items-center gap-2">
+                                                                    <DoorOpen className="h-4 w-4 text-muted-foreground" />
+                                                                    <SelectValue placeholder="Seleccione consultorio" />
+                                                                </div>
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {consultingRooms.map((room) => (
+                                                                <SelectItem key={room.id} value={room.id}>
+                                                                    {room.nombre}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="pt-4 border-t">
+                                        <FormField
+                                            control={form.control}
+                                            name="isDischarge"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-row items-center justify-between rounded-xl border p-4 bg-emerald-50/10 border-emerald-100">
+                                                    <div className="space-y-0.5">
+                                                        <FormLabel className="text-base text-emerald-800 flex items-center gap-2">
+                                                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                                                            Dar de Alta Médica
+                                                        </FormLabel>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Marcar al paciente como dado de alta después de esta consulta.
+                                                        </p>
+                                                    </div>
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                            className="data-[state=checked]:bg-emerald-600"
+                                                        />
+                                                    </FormControl>
                                                 </FormItem>
                                             )}
                                         />

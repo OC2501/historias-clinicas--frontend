@@ -1,12 +1,26 @@
 // ===== ENUMS (espejo del backend) =====
 
-export const UserRole = {
-    ADMIN: 'ADMIN',
+export const SystemRole = {
+    ADMIN: 'ADMIN', // Puede no usarse, pero lo mantenemos por si el backend lo exportó
+    SUPERADMIN: 'SUPERADMIN',
     USER: 'USER',
+} as const;
+export type SystemRole = (typeof SystemRole)[keyof typeof SystemRole];
+
+export const OrganizationRole = {
+    OWNER: 'OWNER',
+    MEDICAL_DIRECTOR: 'MEDICAL_DIRECTOR',
+    ADMIN: 'ADMIN',
     DOCTOR: 'DOCTOR',
     SECRETARY: 'SECRETARY',
 } as const;
-export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole];
+
+export const OrganizationPlanType = {
+    INDEPENDENT: 'INDEPENDENT',
+    CLINIC: 'CLINIC',
+} as const;
+export type OrganizationPlanType = (typeof OrganizationPlanType)[keyof typeof OrganizationPlanType];
 
 export const Status = {
     SCHEDULED: 'SCHEDULED',

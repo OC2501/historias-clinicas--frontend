@@ -108,6 +108,11 @@
   --sidebar-accent-foreground: #F6F3EA;
   --sidebar-border: #303854;
   --sidebar-ring: #C2CDD5;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
 }
 
 @layer base {
@@ -118,4 +123,13 @@
   body {
     @apply bg-background text-foreground m-0 p-0 overflow-hidden font-sans;
   }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }

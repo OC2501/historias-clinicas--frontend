@@ -1,8 +1,7 @@
 import type { UseFormReturn } from 'react-hook-form';
-import { Loader2, Search, Check, Info, ChevronsUpDown, History, Stethoscope, User as UserIcon, X, FileText, Activity, ClipboardList } from 'lucide-react';
+import { Loader2, Search, Check, Info, ChevronsUpDown, History, User as UserIcon, X, FileText, Activity, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { PDFViewer } from '@react-pdf/renderer';
-import { format } from 'date-fns';
 
 import { RichTextEditor } from '@/components/shared/RichTextEditor';
 
@@ -266,21 +265,53 @@ export function ClinicalHistoryFormUI({
                         <Tabs defaultValue="consulta" className="w-full">
                             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
                                 <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full lg:max-w-2xl !h-auto sm:!h-12 p-1.5 bg-muted/50 rounded-xl gap-1.5 shadow-inner grow">
-                                    <TabsTrigger value="consulta" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                                    <TabsTrigger value="consulta" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0 relative">
                                         <History className="h-4 w-4" />
                                         <span className="text-xs sm:text-sm font-medium">Consulta</span>
+                                        {(form.formState.errors.motivoConsulta || form.formState.errors.enfermedadActual || form.formState.errors.diagnosticos) && (
+                                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+                                            </span>
+                                        )}
                                     </TabsTrigger>
-                                    <TabsTrigger value="antecedentes" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                                    <TabsTrigger value="antecedentes" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0 relative">
                                         <UserIcon className="h-4 w-4" />
                                         <span className="text-xs sm:text-sm font-medium">Antecedentes</span>
+                                        {(form.formState.errors.antecedentesPersonales || form.formState.errors.antecedentesFamiliares || form.formState.errors.habitosPsicobiologicos) && (
+                                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+                                            </span>
+                                        )}
                                     </TabsTrigger>
-                                    <TabsTrigger value="fisico" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                                    <TabsTrigger value="fisico" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0 relative">
                                         <Activity className="h-4 w-4" />
                                         <span className="text-xs sm:text-sm font-medium">Examen Físico</span>
+                                        {(form.formState.errors.presionArterial ||
+                                            form.formState.errors.frecuenciaCardiaca ||
+                                            form.formState.errors.frecuenciaRespiratoria ||
+                                            form.formState.errors.saturacionOxigeno ||
+                                            form.formState.errors.temperatura ||
+                                            form.formState.errors.peso ||
+                                            form.formState.errors.altura ||
+                                            form.formState.errors.imc ||
+                                            form.formState.errors.otros) && (
+                                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+                                                </span>
+                                            )}
                                     </TabsTrigger>
-                                    <TabsTrigger value="plan" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0">
+                                    <TabsTrigger value="plan" className="h-12 sm:h-full gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all focus-visible:ring-0 relative">
                                         <ClipboardList className="h-4 w-4" />
                                         <span className="text-xs sm:text-sm font-medium">Plan</span>
+                                        {(form.formState.errors.examenes || form.formState.errors.medicacion) && (
+                                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive"></span>
+                                            </span>
+                                        )}
                                     </TabsTrigger>
                                 </TabsList>
 

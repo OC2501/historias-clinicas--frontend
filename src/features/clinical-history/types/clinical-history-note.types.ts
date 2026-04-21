@@ -8,6 +8,8 @@ export interface ClinicalHistoryNote {
     planAjustado?: any;
     proximaCita?: string;
     doctor?: Doctor;
+    isDischarge?: boolean;
+    horaCita?: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
@@ -21,6 +23,9 @@ export interface CreateClinicalHistoryNoteRequest {
     planAjustado?: Record<string, any>;
     proximaCita?: string;
     clinicalHistoryId: string;
+    horaCita?: string;
+    consultingRoomId?: string;
+    isDischarge?: boolean;
 }
 
 export type UpdateClinicalHistoryNoteRequest = Partial<CreateClinicalHistoryNoteRequest>;

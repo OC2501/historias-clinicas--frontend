@@ -18,7 +18,6 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTable } from '@/components/tables/DataTable';
 import { getAppointmentColumns } from '@/features/appointment/components/AppointmentColumns';
@@ -41,10 +40,14 @@ export function AppointmentsPage() {
         view,
         setView,
         appointments,
-        filteredAppointments,
+        meta,
         isLoading,
         searchTerm,
         setSearchTerm,
+        page,
+        setPage,
+        limit,
+        setLimit,
         currentDate,
         weekDays,
         nextWeek,
@@ -55,7 +58,7 @@ export function AppointmentsPage() {
 
     // Mutation para cambiar estado
     const statusMutation = useMutation({
-        mutationFn: ({ id, status }: { id: string; status: Status }) => 
+        mutationFn: ({ id, status }: { id: string; status: Status }) =>
             appointmentsApi.update(id, { status }),
         onSuccess: () => {
             toast.success('Estado de la cita actualizado');
@@ -106,7 +109,7 @@ export function AppointmentsPage() {
                             Calendario
                         </TabsTrigger>
                     </TabsList>
- 
+
                     <div className="flex items-center gap-2">
                         <div className="relative flex-1 sm:w-64">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -124,15 +127,19 @@ export function AppointmentsPage() {
                 </div>
 
                 {view === 'list' ? (
-                    <Card className="border-none shadow-sm overflow-hidden">
-                        <CardContent className="p-0">
-                            <DataTable
-                                columns={columns}
-                                data={filteredAppointments}
-                                isLoading={isLoading}
-                            />
-                        </CardContent>
-                    </Card>
+                    <DataTable
+                        columns={columns}
+                        data={appointments}
+                        isLoading={isLoading}
+                        pagination={{
+                            currentPage: page,
+                            totalPages: meta?.lastPage || 1,
+                            pageSize: limit,
+                            totalItems: meta?.total || 0,
+                            onPageChange: setPage,
+                            onPageSizeChange: setLimit
+                        }}
+                    />
                 ) : (
                     <div className="space-y-4 animate-in slide-in-from-bottom-2 duration-300">
                         <div className="flex items-center justify-between bg-muted/20 p-2 rounded-lg border">

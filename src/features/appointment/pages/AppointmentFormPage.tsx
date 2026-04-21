@@ -64,7 +64,7 @@ export function AppointmentFormPage() {
                         setIsPatientListOpen={setIsPatientListOpen}
                         selectedPatient={selectedPatient}
                         onSubmit={onSubmit}
-                        userRole={user?.role}
+                        userRole={(user?.organizationRole || user?.systemRole)}
                     />
                 </CardContent>
             </Card>

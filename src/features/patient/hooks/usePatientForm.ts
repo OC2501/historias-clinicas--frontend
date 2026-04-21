@@ -74,7 +74,7 @@ export function usePatientForm(id?: string) {
                         email: p.email || '',
                         doctorId: p.doctor?.id || '',
                     });
-                } else if (user?.role === 'DOCTOR') {
+                } else if (user?.organizationRole === 'DOCTOR') {
                     const currentDoctor = doctorsData.find((d: Doctor) => d.user?.id === user?.id);
                     if (currentDoctor) {
                         form.setValue('doctorId', currentDoctor.id);
@@ -96,7 +96,7 @@ export function usePatientForm(id?: string) {
         try {
             const payload: any = {
                 ...values,
-                doctorId: values.doctorId || (user?.role === 'DOCTOR' ? user.doctorProfile?.id : undefined)
+                doctorId: values.doctorId || (user?.organizationRole === 'DOCTOR' ? user.doctorProfile?.id : undefined)
             };
 
             // Limpiar campos opcionales que envían strings vacíos

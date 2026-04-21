@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Plus, Search, FileDown } from 'lucide-react';
+import { Plus, Search, } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable } from '@/components/tables/DataTable';
 import { getClinicalHistoryColumns } from '@/features/clinical-history/components/ClinicalHistoryColumns';
 import { ClinicalHistoryPrintModal } from './ClinicalHistoryPrintModal';
@@ -25,6 +24,8 @@ import {
 export function ClinicalHistoryListPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
     const [selectedHistory, setSelectedHistory] = useState<any>(null);
     const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -53,22 +54,32 @@ export function ClinicalHistoryListPage() {
     const columns = getClinicalHistoryColumns(navigate, handlePrintRequest, handleDeleteRequest);
 
     const { data: response, isLoading: isLoadingHistories } = useQuery({
-        queryKey: ['clinical-histories'],
-        queryFn: () => clinicalHistoryApi.getAll(),
+        queryKey: ['clinical-histories', page, limit],
+        queryFn: async () => {
+            const res = await clinicalHistoryApi.getAll({
+                page,
+                limit
+            });
+            return res.data;
+        },
     });
 
     const { data: doctorsRes, isLoading: isLoadingDoctors } = useQuery({
         queryKey: ['doctors'],
-        queryFn: () => doctorsApi.getAll(),
+        queryFn: async () => {
+            const res = await doctorsApi.getAll();
+            return res.data;
+        },
     });
 
-    const doctors = useMemo(() => doctorsRes?.data?.data || [], [doctorsRes]);
+    const doctors = useMemo(() => doctorsRes?.data || [], [doctorsRes]);
 
     const processedData = useMemo(() => {
-        const rawData = response?.data?.data || [];
+        const rawData = response?.data || [];
         if (!Array.isArray(rawData)) return [];
 
-        return rawData.map((h: any) => {
+        // 1. Cross-reference doctor data
+        const mapped = rawData.map((h: any) => {
             if (!h.doctor?.user?.name && doctors.length > 0) {
                 const fullDoctor = doctors.find((d: any) => d.id === h.doctor?.id);
                 if (fullDoctor?.user) {
@@ -83,18 +94,37 @@ export function ClinicalHistoryListPage() {
             }
             return h;
         });
-    }, [response, doctors]);
 
-    const filteredData = useMemo(() => {
-        if (!search) return processedData;
-        const lowSearch = search.toLowerCase();
-        return processedData.filter(item =>
-            item.patient?.firstName?.toLowerCase().includes(lowSearch) ||
-            item.patient?.lastName?.toLowerCase().includes(lowSearch) ||
-            item.specialty?.toLowerCase().includes(lowSearch) ||
-            (item.doctor?.user?.name || '').toLowerCase().includes(lowSearch)
-        );
-    }, [processedData, search]);
+        // 2. Local Filtering
+        if (!search) return mapped;
+        const lowerSearch = search.toLowerCase();
+        return mapped.filter((h: any) => {
+            const patientName = `${h.patient?.firstName || ''} ${h.patient?.lastName || ''}`.toLowerCase();
+            const documentId = (h.patient?.documentId || '').toLowerCase();
+            const specialty = (h.especialidad || '').toLowerCase();
+            const doctorName = (h.doctor?.user?.name || '').toLowerCase();
+
+            return patientName.includes(lowerSearch) ||
+                documentId.includes(lowerSearch) ||
+                specialty.includes(lowerSearch) ||
+                doctorName.includes(lowerSearch);
+        });
+    }, [response, doctors, search]);
+
+    const resilientMeta = useMemo(() => {
+        if (response?.meta) return response.meta;
+        return {
+            page: page,
+            lastPage: (response as any)?.lastPage || Math.ceil((processedData?.length || 0) / limit) || 1,
+            total: (response as any)?.total || processedData?.length || 0,
+            limit: limit
+        };
+    }, [response, page, limit, processedData]);
+
+    const handleSearchChange = (value: string) => {
+        setSearch(value);
+        setPage(1);
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -113,33 +143,31 @@ export function ClinicalHistoryListPage() {
                 </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Historiales del Centro</CardTitle>
-                    <CardDescription>
-                        Búsqueda rápida y filtros por especialidad o paciente.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Buscar por paciente, especialidad..."
-                                className="pl-8"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <DataTable
-                        columns={columns}
-                        data={filteredData}
-                        isLoading={isLoadingHistories || isLoadingDoctors}
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por paciente, especialidad..."
+                        className="pl-8"
+                        value={search}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                     />
-                </CardContent>
-            </Card>
+                </div>
+            </div>
+
+            <DataTable
+                columns={columns}
+                data={processedData}
+                isLoading={isLoadingHistories || isLoadingDoctors}
+                pagination={{
+                    currentPage: page,
+                    totalPages: resilientMeta?.lastPage || 1,
+                    pageSize: limit,
+                    totalItems: resilientMeta?.total || 0,
+                    onPageChange: setPage,
+                    onPageSizeChange: setLimit
+                }}
+            />
 
             <ClinicalHistoryPrintModal
                 isOpen={isPrintModalOpen}

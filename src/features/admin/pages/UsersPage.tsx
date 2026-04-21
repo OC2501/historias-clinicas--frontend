@@ -37,7 +37,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { usersApi } from '@/api';
-import { UserRole } from '@/types/enums';
+import { SystemRole, OrganizationRole } from '@/types/enums';
 import type { User, CreateUserRequest } from '@/types';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
@@ -54,12 +54,18 @@ export function UsersPage() {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
+    // Paginación
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [meta, setMeta] = useState<any>(null);
+
     const form = useForm<UserFormValues>({
-        resolver: zodResolver(userSchema),
+        resolver: zodResolver(userSchema) as any,
         defaultValues: {
             name: '',
             email: '',
-            role: UserRole.USER,
+            systemRole: SystemRole.USER,
+            organizationRole: undefined,
             password: '',
         },
     });
@@ -67,8 +73,9 @@ export function UsersPage() {
     const loadUsers = async () => {
         setIsLoading(true);
         try {
-            const res = await usersApi.getAll({ page: 1, limit: 100 });
+            const res = await usersApi.getAll({ page, limit });
             setUsers(res.data.data);
+            setMeta(res.data.meta);
         } catch (error) {
             toast.error('Error al cargar usuarios');
         } finally {
@@ -78,7 +85,7 @@ export function UsersPage() {
 
     useEffect(() => {
         loadUsers();
-    }, []);
+    }, [page, limit]);
 
     const onSubmit = async (values: UserFormValues) => {
         setIsSubmitting(true);
@@ -112,7 +119,8 @@ export function UsersPage() {
         form.reset({
             name: user.name,
             email: user.email,
-            role: user.role,
+            systemRole: user.systemRole,
+            organizationRole: user.organizationRole,
             password: '',
         });
         setIsOpen(true);
@@ -136,7 +144,7 @@ export function UsersPage() {
         form.reset();
     };
 
-    if (isLoading) return <div className="p-8 text-center text-muted-foreground">Cargando...</div>;
+    if (isLoading && users.length === 0) return <div className="p-8 text-center text-muted-foreground">Cargando...</div>;
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -164,6 +172,14 @@ export function UsersPage() {
                         data={users}
                         isLoading={isLoading}
                         onRowClick={handleEdit}
+                        pagination={meta ? {
+                            currentPage: page,
+                            totalPages: meta.lastPage,
+                            pageSize: limit,
+                            totalItems: meta.total,
+                            onPageChange: setPage,
+                            onPageSizeChange: setLimit
+                        } : undefined}
                     />
                 </CardContent>
             </Card>
@@ -206,10 +222,10 @@ export function UsersPage() {
                             />
                             <FormField
                                 control={form.control}
-                                name="role"
+                                name="organizationRole"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Rol de Usuario *</FormLabel>
+                                        <FormLabel>Rol en Organización (Opcional si es SuperAdmin)</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
@@ -217,9 +233,10 @@ export function UsersPage() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value={UserRole.ADMIN}>Administrador</SelectItem>
-                                                <SelectItem value={UserRole.DOCTOR}>Médico</SelectItem>
-                                                <SelectItem value={UserRole.SECRETARY}>Secretaría</SelectItem>
+                                                <SelectItem value={OrganizationRole.OWNER}>Propietario / Admin Centro</SelectItem>
+                                                <SelectItem value={OrganizationRole.ADMIN}>Administrador de Sistema Auxiliar</SelectItem>
+                                                <SelectItem value={OrganizationRole.DOCTOR}>Médico</SelectItem>
+                                                <SelectItem value={OrganizationRole.SECRETARY}>Secretaría</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

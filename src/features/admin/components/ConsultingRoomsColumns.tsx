@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 
 export const getConsultingRoomColumns = (
     onEdit: (room: ConsultingRoom) => void,
-    onDelete: (id: string) => void
-): Column<ConsultingRoom>[] => [
+    onDelete: (id: string) => void,
+    isAdmin: boolean = false
+): Column<ConsultingRoom>[] => {
+    const columns: Column<ConsultingRoom>[] = [
     {
         header: 'Consultorio',
         accessorKey: (consultingRoom) => (
@@ -39,30 +41,36 @@ export const getConsultingRoomColumns = (
             );
         },
     },
-    {
-        header: 'Acciones',
-        className: 'text-right',
-        accessorKey: (consultingRoom) => {
-            return (
-                <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
-                        onClick={() => onEdit(consultingRoom)}
-                    >
-                        <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        onClick={() => onDelete(consultingRoom.id)}
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-            );
-        },
-    },
 ];
+
+    if (isAdmin) {
+        columns.push({
+            header: 'Acciones',
+            className: 'text-right',
+            accessorKey: (consultingRoom) => {
+                return (
+                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                            onClick={() => onEdit(consultingRoom)}
+                        >
+                            <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={() => onDelete(consultingRoom.id)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                );
+            },
+        });
+    }
+
+    return columns;
+};

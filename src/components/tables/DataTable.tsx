@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Column } from '@/types/table';
+import { TablePagination } from './TablePagination';
 import { cn } from '@/lib/utils';
 
 interface DataTableProps<T> {
@@ -16,6 +17,15 @@ interface DataTableProps<T> {
     isLoading?: boolean;
     onRowClick?: (item: T) => void;
     className?: string;
+    // Paginación
+    pagination?: {
+        currentPage: number;
+        totalPages: number;
+        pageSize: number;
+        totalItems: number;
+        onPageChange: (page: number) => void;
+        onPageSizeChange: (size: number) => void;
+    };
 }
 
 export function DataTable<T extends { id: string | number }>({
@@ -23,7 +33,8 @@ export function DataTable<T extends { id: string | number }>({
     data,
     isLoading,
     onRowClick,
-    className
+    className,
+    pagination
 }: DataTableProps<T>) {
     if (isLoading) {
         return (
@@ -152,6 +163,17 @@ export function DataTable<T extends { id: string | number }>({
                     </div>
                 )}
             </div>
+
+            {pagination && (
+                <TablePagination
+                    currentPage={pagination.currentPage}
+                    totalPages={pagination.totalPages}
+                    pageSize={pagination.pageSize}
+                    totalItems={pagination.totalItems}
+                    onPageChange={pagination.onPageChange}
+                    onPageSizeChange={pagination.onPageSizeChange}
+                />
+            )}
         </div>
     );
 }

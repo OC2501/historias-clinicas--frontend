@@ -68,7 +68,7 @@ export function useClinicalHistoryForm() {
 
     // Effect to set doctor initial data
     useEffect(() => {
-        if (user?.role === 'DOCTOR' && doctors.length > 0) {
+        if ((user?.organizationRole || user?.systemRole) === 'DOCTOR' && doctors.length > 0) {
             const doctor = doctors.find((d: Doctor) => d.user?.id === user?.id);
             if (doctor) {
                 form.setValue('doctorId', doctor.id);

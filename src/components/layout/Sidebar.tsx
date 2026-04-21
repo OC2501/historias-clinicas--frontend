@@ -13,10 +13,12 @@ import {
     History,
     ChevronLeft,
     ChevronRight,
+    Shield,
+    FileBarChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { UserRole } from '@/types';
+import { SystemRole, OrganizationRole } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useUIStore } from '@/store/ui.store';
@@ -54,41 +56,58 @@ const mainNavItems: NavItem[] = [
         to: '/clinical-history',
         label: 'Historias Clínicas',
         icon: <FileText className="h-4 w-4" />,
-        roles: [UserRole.DOCTOR, UserRole.ADMIN],
+        roles: [OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, SystemRole.SUPERADMIN],
     },
 
     {
         to: '/clinical-history-note',
         label: 'Notas de Evolución',
         icon: <History className="h-4 w-4" />,
-        roles: [UserRole.DOCTOR, UserRole.ADMIN],
+        roles: [OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, SystemRole.SUPERADMIN],
     }
 ];
 
 const settingsNavItems: NavItem[] = [
     {
+        to: '/settings/profile',
+        label: 'Mi Perfil',
+        icon: <UserCog className="h-4 w-4" />,
+    },
+    {
+        to: '/settings/reports',
+        label: 'Reportes',
+        icon: <FileBarChart className="h-4 w-4" />,
+        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.DOCTOR],
+    },
+    {
         to: '/settings/schedule',
         label: 'Horarios',
         icon: <Clock className="h-4 w-4" />,
-        roles: [UserRole.ADMIN, UserRole.SECRETARY, UserRole.DOCTOR],
+        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN],
     },
     {
         to: '/settings/rooms',
         label: 'Consultorios',
         icon: <DoorOpen className="h-4 w-4" />,
-        roles: [UserRole.ADMIN, UserRole.SECRETARY, UserRole.DOCTOR],
+        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN],
     },
     {
         to: '/settings/templates',
         label: 'Plantillas',
         icon: <BookTemplate className="h-4 w-4" />,
-        roles: [UserRole.ADMIN],
+        roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER, OrganizationRole.DOCTOR],
     },
     {
         to: '/settings/users',
         label: 'Usuarios',
         icon: <UserCog className="h-4 w-4" />,
-        roles: [UserRole.ADMIN],
+        roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER],
+    },
+    {
+        to: '/settings/audit',
+        label: 'Auditoría',
+        icon: <Shield className="h-4 w-4" />,
+        roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER],
     },
 ];
 
@@ -102,12 +121,12 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
 
     const isActive = (path: string) => {
         if (path === '/') return location.pathname === '/';
-        return location.pathname.startsWith(path);
+        return location.pathname === path || location.pathname.startsWith(`${path}/`);
     };
 
     const canAccess = (item: NavItem) => {
         if (!item.roles) return true;
-        return user && item.roles.includes(user.role);
+        return user && item.roles.includes((user.organizationRole || user.systemRole));
     };
 
     const hasSettingsAccess = settingsNavItems.some(canAccess);
@@ -242,7 +261,7 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                         <div className="animate-in fade-in duration-300">
                             <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Usuario Actual</p>
                             <p className="text-sm font-bold truncate">{user?.name}</p>
-                            <p className="text-[10px] text-muted-foreground font-medium">{user?.role}</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">{(user?.organizationRole || user?.systemRole)}</p>
                         </div>
                     ) : (
                         <div className="flex justify-center py-1">

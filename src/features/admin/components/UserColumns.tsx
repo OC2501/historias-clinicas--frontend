@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UserCircle, Mail, Edit2, Trash2 } from 'lucide-react';
 import type { User } from '@/types';
-import { UserRole } from '@/types/enums';
+import { OrganizationRole } from '@/types/enums';
 import type { Column } from '@/types/table';
 
 export const getUserColumns = (
@@ -30,11 +30,14 @@ export const getUserColumns = (
     {
         header: 'Rol',
         accessorKey: (user) => {
-            switch (user.role) {
-                case UserRole.ADMIN: return <Badge className="bg-red-500 hover:bg-red-600">ADMIN</Badge>;
-                case UserRole.DOCTOR: return <Badge className="bg-blue-500 hover:bg-blue-600">MÉDICO</Badge>;
-                case UserRole.SECRETARY: return <Badge className="bg-orange-500 hover:bg-orange-600">SECRETARÍA/O</Badge>;
-                default: return <Badge variant="secondary">{user.role}</Badge>;
+            const role = user.organizationRole || user.systemRole;
+            switch (role) {
+                case OrganizationRole.ADMIN: return <Badge className="bg-red-500 hover:bg-red-600">ADMIN</Badge>;
+                case OrganizationRole.DOCTOR: return <Badge className="bg-blue-500 hover:bg-blue-600">MÉDICO</Badge>;
+                case OrganizationRole.SECRETARY: return <Badge className="bg-orange-500 hover:bg-orange-600">SECRETARÍA/O</Badge>;
+                case OrganizationRole.OWNER: return <Badge className="bg-purple-500 hover:bg-purple-600">PROPIETARIO</Badge>;
+                case OrganizationRole.MEDICAL_DIRECTOR: return <Badge className="bg-green-500 hover:bg-green-600">DIRECTOR</Badge>;
+                default: return <Badge variant="secondary">{role}</Badge>;
             }
         },
     },

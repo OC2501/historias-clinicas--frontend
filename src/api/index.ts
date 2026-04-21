@@ -10,5 +10,7 @@ export { consultingRoomsApi } from '../features/admin/api/consulting-rooms.api';
 export { specialtiesApi } from '../features/admin/api/specialties.api';
 export { usersApi } from '../features/admin/api/users.api';
 export { configurationApi } from '../features/admin/api/configuration.api';
+export { organizationsApi } from '../features/admin/api/organizations.api';
 export { dashboardApi } from '../features/dashboard/api/dashboard.api';
+export { generalReportsApi } from '../features/general-reports/api/general-reports.api';
 

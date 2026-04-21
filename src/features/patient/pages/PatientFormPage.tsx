@@ -56,7 +56,7 @@ export function PatientFormPage() {
                         isSubmitting={isSubmitting}
                         isEdit={isEdit}
                         onSubmit={onSubmit}
-                        userRole={user?.role}
+                        userRole={user?.organizationRole || user?.systemRole}
                     />
                 </CardContent>
             </Card>

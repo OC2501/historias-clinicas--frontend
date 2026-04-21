@@ -1,146 +1,66 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from '@/components/ui/form';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserRole } from '@/types';
-import { toast } from 'sonner';
-import { registerSchema, type RegisterFormValues } from '../types/auth.schema';
+import { RegisterWizard } from '@/features/auth/components/RegisterWizard';
+import { ShieldCheck, HeartPulse, Activity } from 'lucide-react';
 
 export function RegisterPage() {
-    const { register } = useAuth();
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const form = useForm<RegisterFormValues>({
-        resolver: zodResolver(registerSchema),
-        defaultValues: {
-            name: '',
-            email: '',
-            password: '',
-            role: undefined,
-        },
-    });
-
-    const onSubmit = async (data: RegisterFormValues) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            await register(data);
-            toast.success('Cuenta creada exitosamente. Ya puede iniciar sesión.');
-            navigate('/login');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Error al crear la cuenta. Intente nuevamente.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     return (
-        <Card className="w-full">
-            <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-bold">Crear Cuenta</CardTitle>
-                <CardDescription>
-                    Complete el formulario para registrarse en el sistema
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                {error && (
-                    <div className="mb-4 rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                        {error}
-                    </div>
-                )}
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nombre Completo</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Juan Pérez" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Correo Electrónico</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="nombre@ejemplo.com" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Contraseña</FormLabel>
-                                    <FormControl>
-                                        <Input type="password" placeholder="••••••••" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="role"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Rol en el sistema</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un rol" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value={UserRole.DOCTOR}>Médico</SelectItem>
-                                            <SelectItem value={UserRole.SECRETARY}>Secretario/a</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Registrarse
-                        </Button>
-                    </form>
-                </Form>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-                <div className="text-sm text-muted-foreground text-center">
-                    ¿Ya tiene una cuenta?{' '}
-                    <Link to="/login" className="text-primary hover:underline font-medium">
-                        Inicie sesión aquí
-                    </Link>
+        <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans overflow-hidden">
+            {/* Left Side: Wizard Content */}
+            <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-24 py-10 bg-white animate-in fade-in slide-in-from-left-4 duration-700 overflow-y-auto">
+                <div className="max-w-xl w-full mx-auto py-8">
+                    <RegisterWizard />
                 </div>
-            </CardFooter>
-        </Card>
+            </div>
+
+            {/* Right Side: Visual Branding */}
+            <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-primary">
+                {/* Background Pattern / Illustration (Variant for Registration) */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/img/medical_register.png" 
+                        alt="Medical Network Illustration" 
+                        className="w-full h-full object-cover opacity-50 scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-transparent" />
+                </div>
+
+                {/* Glassmorphism Cards */}
+                <div className="relative z-10 w-full flex flex-col p-12 lg:p-16 justify-between h-full animate-in fade-in zoom-in duration-1000">
+                    <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold tracking-widest uppercase">
+                            <Activity className="h-3.5 w-3.5 text-spring-green-400" />
+                            Expande tu Red Médica
+                        </div>
+                        <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight">
+                            Únete a la <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">Comunidad EHR</span>
+                        </h2>
+                        <p className="text-lg lg:text-xl text-white/70 max-w-md leading-relaxed font-light">
+                            La plataforma que conecta a los mejores profesionales con la tecnología más avanzada.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pb-8">
+                        {[
+                            { icon: HeartPulse, label: 'Crecimiento Exponencial', desc: 'Gestiona más pacientes' },
+                            { icon: ShieldCheck, label: 'Respaldo Total', desc: 'Soporte 24/7' }
+                        ].map((item, i) => (
+                            <div key={i} className="p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 space-y-2.5 hover:bg-white/20 transition-all duration-300">
+                                <div className="p-2 rounded-xl bg-white/20 w-fit">
+                                    <item.icon className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <h4 className="text-white text-sm font-bold">{item.label}</h4>
+                                    <p className="text-white/50 text-[10px] italic">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Animated Light Blobs */}
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000" />
+            </div>
+        </div>
     );
 }

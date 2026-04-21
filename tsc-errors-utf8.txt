@@ -1,7 +1,0 @@
-﻿src/features/admin/components/ScheduleColumns.tsx(2,33): error TS6133: 'User' is declared but its value is never read.
-src/features/admin/pages/SchedulePage.tsx(43,1): error TS6192: All imports in import declaration are unused.
-src/features/clinical-history/hooks/useClinicalHistory.ts(5,1): error TS6133: 'ClinicalHistory' is declared but its value is never read.
-src/features/clinical-history/pages/ClinicalHistoryListPage.tsx(13,1): error TS6133: 'UserRole' is declared but its value is never read.
-src/features/clinical-history/pages/ClinicalHistoryListPage.tsx(16,11): error TS6133: 'user' is declared but its value is never read.
-src/features/clinical-history/pages/ClinicalHistoryNoteListPage.tsx(13,1): error TS6133: 'UserRole' is declared but its value is never read.
-src/features/clinical-history/pages/ClinicalHistoryNoteListPage.tsx(16,11): error TS6133: 'user' is declared but its value is never read.

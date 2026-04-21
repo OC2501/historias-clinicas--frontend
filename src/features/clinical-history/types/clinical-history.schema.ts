@@ -47,6 +47,9 @@ export const noteSchema = z.object({
     cambiosSintomas: z.string().optional().or(z.literal('')),
     planAjustado: z.string().optional().or(z.literal('')),
     proximaCita: z.string().optional().or(z.literal('')),
+    horaCita: z.string().optional().or(z.literal('')),
+    consultingRoomId: z.string().optional().or(z.literal('')),
+    isDischarge: z.boolean(),
     seguimiento: z.record(z.string(), z.any()).optional(),
 });
 

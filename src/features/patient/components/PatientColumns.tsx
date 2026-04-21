@@ -2,6 +2,7 @@ import type { Patient } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Column } from '@/types/table';
+import { PatientStatusBadge } from './PatientStatusBadge';
 
 export const PatientColumns: Column<Patient>[] = [
     {
@@ -11,6 +12,12 @@ export const PatientColumns: Column<Patient>[] = [
                 <span className="font-medium">{patient?.firstName || '—'} {patient?.lastName || ''}</span>
                 <span className="text-xs text-muted-foreground">{patient?.identificationNumber || 'S/D'}</span>
             </div>
+        ),
+    },
+    {
+        header: 'Estado',
+        accessorKey: (patient) => (
+            <PatientStatusBadge status={patient.status} />
         ),
     },
     {

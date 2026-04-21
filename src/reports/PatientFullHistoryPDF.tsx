@@ -295,7 +295,7 @@ export const PatientFullHistoryPDF = ({ patient, histories }: PatientFullHistory
                         {h.notes && h.notes.length > 0 && (
                             <View style={[styles.section, { marginTop: 10, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 10 }]}>
                                 <Text style={[styles.sectionTitle, { color: '#475569' }]}>Notas de Evolución ({h.notes.length})</Text>
-                                {h.notes.map((n, i) => (
+                                {h.notes.map((n) => (
                                     <View key={n.id} style={{ marginBottom: 8, paddingLeft: 8, borderLeftWidth: 2, borderLeftColor: '#cbd5e1' }}>
                                         <Text style={{ fontSize: 8, color: '#64748b', marginBottom: 2 }}>
                                             {format(new Date(n.fecha || n.createdAt), "dd/MM/yyyy", { locale: es })} - Dr. {n.doctor?.user?.name || h.doctor?.user?.name || 'No asignado'}

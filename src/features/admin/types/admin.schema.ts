@@ -1,12 +1,13 @@
 import * as z from 'zod';
-import { UserRole } from '../../../types/enums';
+import { SystemRole, OrganizationRole } from '../../../types/enums';
 
 // Users
 export const userSchema = z.object({
     name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     email: z.string().email('Email inválido'),
     password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
-    role: z.nativeEnum(UserRole, { message: 'Seleccione un rol' }),
+    systemRole: z.nativeEnum(SystemRole, { message: 'Seleccione un rol' }).default(SystemRole.USER),
+    organizationRole: z.nativeEnum(OrganizationRole).optional(),
     specialty: z.string().optional().or(z.literal('')),
 });
 

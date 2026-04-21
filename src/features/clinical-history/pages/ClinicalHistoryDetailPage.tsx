@@ -3,7 +3,7 @@ import {
     ArrowLeft,
     FileText,
     Plus,
-    FileDown,
+    
     User,
     Calendar,
     Stethoscope,

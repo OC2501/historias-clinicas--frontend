@@ -72,7 +72,7 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
                         reason: app.reason || '',
                         notes: app.notes || '',
                     });
-                } else if (user?.role === 'DOCTOR') {
+                } else if ((user?.organizationRole || user?.systemRole) === 'DOCTOR') {
                     const currentDoctor = doctorsRes.data.data.find((d: Doctor) => d.user?.id === user?.id);
                     if (currentDoctor) {
                         form.setValue('doctorId', currentDoctor.id);

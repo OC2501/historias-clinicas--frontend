@@ -12,6 +12,7 @@ export interface Patient {
     email?: string;
     createdBy?: { id: string; name: string };
     doctor?: { id: string; user?: { name: string }; specialty?: string };
+    status?: string;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;

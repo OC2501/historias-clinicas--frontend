@@ -45,10 +45,13 @@ export function PatientDetailPage() {
     // Cargamos la lista de doctores para cruzar nombres si el backend no los envía en la historia
     const { data: doctorsRes } = useQuery({
         queryKey: ['doctors'],
-        queryFn: () => doctorsApi.getAll(),
+        queryFn: async () => {
+            const res = await doctorsApi.getAll();
+            return res.data;
+        },
     });
 
-    const doctorsList = doctorsRes?.data?.data || [];
+    const doctorsList = doctorsRes?.data || [];
 
     const getDoctorName = (doctorObj: any) => {
         if (doctorObj?.user?.name) return doctorObj.user.name;
