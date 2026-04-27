@@ -4,12 +4,16 @@ import { Header } from './Header';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useUIStore } from '@/store/ui.store';
+import { AlertsModal } from '@/features/alerts/components/AlertsModal';
 
 export function MainLayout() {
     const { isMobileMenuOpen, setMobileMenuOpen } = useUIStore();
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
+            {/* Alerts Modal - shown automatically on first login with unread alerts */}
+            <AlertsModal />
+
             {/* Desktop Sidebar */}
             <div className="hidden lg:block h-full transition-all duration-300 ease-in-out">
                 <Sidebar />

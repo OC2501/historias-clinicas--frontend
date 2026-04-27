@@ -14,6 +14,7 @@ import {
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useUIStore } from '@/store/ui.store';
 import { GlobalSearch } from '../shared/GlobalSearch';
+import { AlertsBell } from '@/features/alerts/components/AlertsBell';
 
 export function Header() {
     const { user, logout } = useAuth();
@@ -55,6 +56,9 @@ export function Header() {
             <div className="flex-1" />
 
             <div className="flex items-center gap-2">
+                {/* Alerts bell */}
+                <AlertsBell />
+
                 {/* Theme toggle */}
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-xl hover:bg-primary/5">
                     {theme === 'dark' ? (
