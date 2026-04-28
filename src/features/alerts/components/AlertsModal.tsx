@@ -26,30 +26,30 @@ const ALERT_CONFIG: Record<AlertType, {
 }> = {
     INFO: {
         icon: Info,
-        badgeClass: 'bg-blue-100 text-blue-700 border-blue-200',
+        badgeClass: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
         iconClass: 'text-blue-500',
-        bgClass: 'bg-blue-50 border-blue-200',
+        bgClass: 'bg-blue-500/10 border border-blue-500/20',
         label: 'Información',
     },
     WARNING: {
         icon: AlertTriangle,
-        badgeClass: 'bg-amber-100 text-amber-700 border-amber-200',
+        badgeClass: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
         iconClass: 'text-amber-500',
-        bgClass: 'bg-amber-50 border-amber-200',
+        bgClass: 'bg-amber-500/10 border border-amber-500/20',
         label: 'Advertencia',
     },
     DANGER: {
         icon: XCircle,
-        badgeClass: 'bg-red-100 text-red-700 border-red-200',
+        badgeClass: 'bg-red-500/10 text-red-500 border-red-500/20',
         iconClass: 'text-red-500',
-        bgClass: 'bg-red-50 border-red-200',
+        bgClass: 'bg-red-500/10 border border-red-500/20',
         label: 'Urgente',
     },
     SUCCESS: {
         icon: CheckCircle,
-        badgeClass: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        badgeClass: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
         iconClass: 'text-emerald-500',
-        bgClass: 'bg-emerald-50 border-emerald-200',
+        bgClass: 'bg-emerald-500/10 border border-emerald-500/20',
         label: 'Éxito',
     },
 };

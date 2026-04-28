@@ -15,6 +15,7 @@ import {
     ChevronRight,
     Shield,
     FileBarChart,
+    Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -107,6 +108,12 @@ const settingsNavItems: NavItem[] = [
         to: '/settings/audit',
         label: 'Auditoría',
         icon: <Shield className="h-4 w-4" />,
+        roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER],
+    },
+    {
+        to: '/settings/alerts',
+        label: 'Alertas',
+        icon: <Bell className="h-4 w-4" />,
         roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER],
     },
 ];

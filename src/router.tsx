@@ -43,6 +43,7 @@ import { UsersPage } from '@/features/admin/pages/UsersPage';
 import ProfilePage from '@/features/admin/pages/ProfilePage';
 import AuditoriaPage from '@/features/admin/pages/AuditoriaPage';
 import GeneralReportsPage from '@/features/general-reports/pages/GeneralReportsPage';
+import AlertsAdminPage from '@/features/alerts/pages/AlertsAdminPage';
 
 export const router = createBrowserRouter([
     // Rutas públicas (Auth)
@@ -110,6 +111,7 @@ export const router = createBrowserRouter([
                         children: [
                             { path: '/settings/users', element: <UsersPage /> },
                             { path: '/settings/audit', element: <AuditoriaPage /> },
+                            { path: '/settings/alerts', element: <AlertsAdminPage /> },
                         ],
                     },
 
