@@ -54,16 +54,25 @@ export function useAppointments() {
         });
 
         // 2. Local Filtering
-        if (!searchTerm) return processed;
-        const lowerSearch = searchTerm.toLowerCase();
-        return processed.filter((app: any) => {
-            const patientName = `${app.patient?.firstName || ''} ${app.patient?.lastName || ''}`.toLowerCase();
-            const documentId = (app.patient?.documentId || '').toLowerCase();
-            const doctorName = (app.doctor?.user?.name || '').toLowerCase();
-            
-            return patientName.includes(lowerSearch) || 
-                   documentId.includes(lowerSearch) || 
-                   doctorName.includes(lowerSearch);
+        let filtered = processed;
+        if (searchTerm) {
+            const lowerSearch = searchTerm.toLowerCase();
+            filtered = processed.filter((app: any) => {
+                const patientName = `${app.patient?.firstName || ''} ${app.patient?.lastName || ''}`.toLowerCase();
+                const documentId = (app.patient?.documentId || '').toLowerCase();
+                const doctorName = (app.doctor?.user?.name || '').toLowerCase();
+                
+                return patientName.includes(lowerSearch) || 
+                       documentId.includes(lowerSearch) || 
+                       doctorName.includes(lowerSearch);
+            });
+        }
+
+        // 3. Local Sorting by Date (Ascending - closest/upcoming first)
+        return filtered.sort((a: any, b: any) => {
+            const dateA = new Date(a.date || a.createdAt || 0).getTime();
+            const dateB = new Date(b.date || b.createdAt || 0).getTime();
+            return dateA - dateB;
         });
     }, [response, doctors, searchTerm]);
 

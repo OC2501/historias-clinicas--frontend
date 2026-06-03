@@ -138,7 +138,7 @@ export default function AlertsAdminPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Gestión de Alertas</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Gestión de Alertas</h1>
                     <p className="text-muted-foreground">
                         Crea y administra comunicados que se muestran a todo el personal al iniciar sesión.
                     </p>
@@ -242,7 +242,7 @@ export default function AlertsAdminPage() {
 
             {/* Create Dialog */}
             <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
-                <DialogContent className="sm:max-w-md rounded-2xl">
+                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-2xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Bell className="h-5 w-5 text-primary" />
@@ -285,7 +285,7 @@ export default function AlertsAdminPage() {
                                     </FormItem>
                                 )}
                             />
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="type"
@@ -323,11 +323,11 @@ export default function AlertsAdminPage() {
                                     )}
                                 />
                             </div>
-                            <div className="flex justify-end gap-3 pt-2">
-                                <Button type="button" variant="outline" onClick={handleClose}>
+                            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                                <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto">
                                     Cancelar
                                 </Button>
-                                <Button type="submit" disabled={createMutation.isPending}>
+                                <Button type="submit" disabled={createMutation.isPending} className="w-full sm:w-auto">
                                     {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Publicar Alerta
                                 </Button>

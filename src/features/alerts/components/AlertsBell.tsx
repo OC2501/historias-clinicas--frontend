@@ -18,10 +18,10 @@ const ALERT_CONFIG: Record<AlertType, {
     iconClass: string;
     bgClass: string;
 }> = {
-    INFO: { icon: Info, iconClass: 'text-blue-500', bgClass: 'bg-blue-50' },
-    WARNING: { icon: AlertTriangle, iconClass: 'text-amber-500', bgClass: 'bg-amber-50' },
-    DANGER: { icon: XCircle, iconClass: 'text-red-500', bgClass: 'bg-red-50' },
-    SUCCESS: { icon: CheckCircle, iconClass: 'text-emerald-500', bgClass: 'bg-emerald-50' },
+    INFO: { icon: Info, iconClass: 'text-blue-500', bgClass: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20' },
+    WARNING: { icon: AlertTriangle, iconClass: 'text-amber-500', bgClass: 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20' },
+    DANGER: { icon: XCircle, iconClass: 'text-red-500', bgClass: 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20' },
+    SUCCESS: { icon: CheckCircle, iconClass: 'text-emerald-500', bgClass: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20' },
 };
 
 export function AlertsBell() {
@@ -49,8 +49,10 @@ export function AlertsBell() {
             </PopoverTrigger>
 
             <PopoverContent
-                align="end"
-                className="w-80 p-0 rounded-2xl shadow-2xl border-primary/10 overflow-hidden"
+                align="center"
+                sideOffset={16}
+                collisionPadding={24}
+                className="w-[calc(100vw-3rem)] sm:w-80 p-0 rounded-2xl shadow-2xl border-primary/10 overflow-hidden"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
@@ -97,7 +99,7 @@ export function AlertsBell() {
                                     <div
                                         key={alert.id}
                                         className={cn(
-                                            'rounded-xl p-3 flex gap-3 group hover:shadow-sm transition-all',
+                                            'rounded-xl p-3 flex gap-3 group hover:shadow-sm transition-all border',
                                             config.bgClass,
                                         )}
                                     >

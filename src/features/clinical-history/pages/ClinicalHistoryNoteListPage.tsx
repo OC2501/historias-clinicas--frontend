@@ -9,8 +9,9 @@ import { DataTable } from '@/components/tables/DataTable';
 import { getClinicalHistoryNoteColumns } from '@/features/clinical-history/components/ClinicalHistoryNoteColumns';
 import { getClinicalHistoryColumns } from '@/features/clinical-history/components/ClinicalHistoryColumns';
 import { ClinicalHistoryNotePrintModal } from './ClinicalHistoryNotePrintModal';
-import { clinicalHistoryNoteApi, doctorsApi, clinicalHistoryApi } from '@/api';
+import { doctorsApi, clinicalHistoryApi } from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useClinicalHistoryNotes } from '../hooks/useClinicalHistoryNotes';
 
 export function ClinicalHistoryNoteListPage() {
     const navigate = useNavigate();
@@ -30,16 +31,7 @@ export function ClinicalHistoryNoteListPage() {
 
     const columns = getClinicalHistoryNoteColumns(navigate, handlePrintRequest);
 
-    const { data: response, isLoading: isLoadingNotes } = useQuery({
-        queryKey: ['clinical-history-notes', page, limit],
-        queryFn: async () => {
-            const res = await clinicalHistoryNoteApi.getAll({
-                page,
-                limit
-            });
-            return res.data;
-        },
-    });
+    const { data: response, isLoading: isLoadingNotes } = useClinicalHistoryNotes(page, limit);
 
     const { data: doctorsRes, isLoading: isLoadingDoctors } = useQuery({
         queryKey: ['doctors'],
@@ -76,9 +68,14 @@ export function ClinicalHistoryNoteListPage() {
         if (!search) return mapped;
         const lowerSearch = search.toLowerCase();
         return mapped.filter((note: any) => {
-            const subjetivo = (note.subjetivo || '').toLowerCase();
+            const subjetivo = (note.estadoSubjetivo || '').toLowerCase();
             const doctorName = (note.doctor?.user?.name || '').toLowerCase();
-            return subjetivo.includes(lowerSearch) || doctorName.includes(lowerSearch);
+            const patient = note.patient || note.clinicalHistory?.patient;
+            const patientName = `${patient?.firstName || ''} ${patient?.lastName || ''}`.toLowerCase();
+            
+            return subjetivo.includes(lowerSearch) || 
+                   doctorName.includes(lowerSearch) || 
+                   patientName.includes(lowerSearch);
         });
     }, [response, doctors, search]);
 

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clinicalHistoryApi, patientsApi, doctorsApi } from '@/api';
 import type { Patient, Doctor, CreateClinicalHistoryRequest } from '@/types';
+import { OrganizationRole } from '@/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -68,7 +69,8 @@ export function useClinicalHistoryForm() {
 
     // Effect to set doctor initial data
     useEffect(() => {
-        if ((user?.organizationRole || user?.systemRole) === 'DOCTOR' && doctors.length > 0) {
+        const isDoctor = user?.organizationRole === OrganizationRole.DOCTOR;
+        if (isDoctor && doctors.length > 0) {
             const doctor = doctors.find((d: Doctor) => d.user?.id === user?.id);
             if (doctor) {
                 form.setValue('doctorId', doctor.id);

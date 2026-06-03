@@ -36,7 +36,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
-import { MedicalReportPDF } from '@/reports/MedicalReportPDF';
+import { MedicalReportPDF } from '@/features/clinical-history/pdf/MedicalReportPDF';
 import { cn } from '@/lib/utils';
 import type { Patient, Doctor } from '@/types';
 import type { ClinicalHistoryFormValues } from '../types/clinical-history.schema';

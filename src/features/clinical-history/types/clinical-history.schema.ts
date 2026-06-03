@@ -44,6 +44,9 @@ export type ClinicalHistoryFormValues = z.infer<typeof clinicalHistorySchema>;
 
 export const noteSchema = z.object({
     estadoSubjetivo: z.string().min(10, 'Describa el estado actual del paciente'),
+    objetivo: z.string().optional().or(z.literal('')),
+    diagnostico: z.string().optional().or(z.literal('')),
+    tratamientoActual: z.string().optional().or(z.literal('')),
     cambiosSintomas: z.string().optional().or(z.literal('')),
     planAjustado: z.string().optional().or(z.literal('')),
     proximaCita: z.string().optional().or(z.literal('')),

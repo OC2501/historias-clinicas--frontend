@@ -4,6 +4,9 @@ export interface ClinicalHistoryNote {
     id: string;
     fecha: string;
     estadoSubjetivo: string;
+    objetivo?: string;
+    diagnostico?: string;
+    tratamientoActual?: string;
     seguimiento?: Record<string, any>;
     planAjustado?: any;
     proximaCita?: string;
@@ -18,6 +21,9 @@ export interface ClinicalHistoryNote {
 export interface CreateClinicalHistoryNoteRequest {
     fecha: string;
     estadoSubjetivo: string;
+    objetivo?: string;
+    diagnostico?: string;
+    tratamientoActual?: string;
     cambiosSintomas?: string;
     seguimiento?: Record<string, any>;
     planAjustado?: Record<string, any>;

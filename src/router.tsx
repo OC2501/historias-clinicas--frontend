@@ -82,21 +82,20 @@ export const router = createBrowserRouter([
                     { path: '/appointments/new', element: <AppointmentFormPage /> },
                     { path: '/appointments/:id/edit', element: <AppointmentFormPage /> },
 
-                    // Historias Clínicas (Solo DOCTOR / ADMIN)
+                    // Historias Clínicas y Notas de Evolución (Solo DOCTOR / ADMIN / MEDICAL_DIRECTOR)
                     {
-                        element: <RoleGuard roles={[OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, SystemRole.SUPERADMIN]} />,
+                        element: <RoleGuard roles={[OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN]} />,
                         children: [
                             { path: '/clinical-history', element: <ClinicalHistoryListPage /> },
                             { path: '/clinical-history/new', element: <ClinicalHistoryFormPage /> },
                             { path: '/clinical-history/:id', element: <ClinicalHistoryDetailPage /> },
+                            // Notas de evolución (requieren el mismo nivel de acceso que las historias clínicas)
+                            { path: '/clinical-history/notes/new', element: <NoteFormPage /> },
+                            { path: '/clinical-history-note', element: <ClinicalHistoryNoteListPage /> },
+                            { path: '/clinical-history-note/new', element: <ClinicalHistoryNoteFormPage /> },
+                            { path: '/clinical-history-note/:id', element: <ClinicalHistoryNoteDetailPage /> },
                         ],
                     },
-
-                    // Notas de evolución
-                    { path: '/clinical-history/notes/new', element: <NoteFormPage /> },
-                    { path: '/clinical-history-note', element: <ClinicalHistoryNoteListPage /> },
-                    { path: '/clinical-history-note/new', element: <ClinicalHistoryNoteFormPage /> },
-                    { path: '/clinical-history-note/:id', element: <ClinicalHistoryNoteDetailPage /> },
 
                     // Configuración
                     { path: '/settings/schedule', element: <SchedulePage /> },

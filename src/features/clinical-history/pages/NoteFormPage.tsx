@@ -46,6 +46,20 @@ import { PatientStatusBadge } from '@/features/patient/components/PatientStatusB
 
 import { noteSchema, type NoteFormValues } from '../types/clinical-history.schema';
 
+const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+    const totalMinutes = i * 15;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const label = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    const value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return { label, value };
+}).filter(opt => {
+    const hour = parseInt(opt.value.split(':')[0]);
+    return hour >= 6 && hour <= 22; // Filtrar horas razonables (6am a 10pm)
+});
+
 export function NoteFormPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -62,6 +76,9 @@ export function NoteFormPage() {
         resolver: zodResolver(noteSchema),
         defaultValues: {
             estadoSubjetivo: '',
+            objetivo: '',
+            diagnostico: '',
+            tratamientoActual: '',
             cambiosSintomas: '',
             planAjustado: '',
             proximaCita: '',
@@ -126,6 +143,9 @@ export function NoteFormPage() {
             await clinicalHistoryNoteApi.create({
                 fecha: new Date().toISOString(),
                 estadoSubjetivo: values.estadoSubjetivo,
+                objetivo: values.objetivo,
+                diagnostico: values.diagnostico,
+                tratamientoActual: values.tratamientoActual,
                 cambiosSintomas: values.cambiosSintomas || undefined,
                 clinicalHistoryId: historyId,
                 seguimiento: values.seguimiento && Object.keys(values.seguimiento).length > 0
@@ -256,6 +276,60 @@ export function NoteFormPage() {
                                         )}
                                     />
 
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <FormField
+                                            control={form.control}
+                                            name="diagnostico"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Diagnóstico *</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Diagnóstico de la visita actual..."
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="tratamientoActual"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Tratamiento Actual</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            placeholder="Tratamiento que el paciente está recibiendo..."
+                                                            className="resize-none h-10"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <FormField
+                                        control={form.control}
+                                        name="objetivo"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Evaluación Objetiva (Examen Físico y Signos Vitales)</FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        placeholder="Describa los hallazgos del examen físico, signos vitales actuales..."
+                                                        className="min-h-[100px]"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
                                     {template && (
                                         <div className="pt-4 border-t space-y-4">
                                             <div className="flex items-center justify-between">
@@ -310,12 +384,23 @@ export function NoteFormPage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Hora de la Cita</FormLabel>
-                                                    <FormControl>
-                                                        <div className="relative">
-                                                            <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                                            <Input type="time" className="pl-10 h-10" {...field} />
-                                                        </div>
-                                                    </FormControl>
+                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-10">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                                                    <SelectValue placeholder="Seleccione hora" />
+                                                                </div>
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="max-h-[250px] sm:max-h-[300px]" position="popper" side="bottom" sideOffset={4} avoidCollisions={false}>
+                                                            {TIME_OPTIONS.map((time) => (
+                                                                <SelectItem key={time.value} value={time.value}>
+                                                                    {time.label}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

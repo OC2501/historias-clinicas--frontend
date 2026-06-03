@@ -3,10 +3,10 @@ import { ShieldCheck, HeartPulse, Activity } from 'lucide-react';
 
 export function RegisterPage() {
     return (
-        <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans overflow-hidden">
+        <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans lg:h-screen lg:overflow-hidden">
             {/* Left Side: Wizard Content */}
-            <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-24 py-10 bg-white animate-in fade-in slide-in-from-left-4 duration-700 overflow-y-auto">
-                <div className="max-w-xl w-full mx-auto py-8">
+            <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-24 py-6 bg-white animate-in fade-in slide-in-from-left-4 duration-700 overflow-y-auto">
+                <div className="max-w-xl w-full mx-auto py-2">
                     <RegisterWizard />
                 </div>
             </div>

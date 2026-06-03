@@ -15,7 +15,7 @@ export function MainLayout() {
             <AlertsModal />
 
             {/* Desktop Sidebar */}
-            <div className="hidden lg:block h-full transition-all duration-300 ease-in-out">
+            <div className="hidden lg:block h-screen max-h-screen sticky top-0 transition-all duration-300 ease-in-out">
                 <Sidebar />
             </div>
 

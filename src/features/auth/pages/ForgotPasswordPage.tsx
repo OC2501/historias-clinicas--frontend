@@ -75,7 +75,7 @@ export function ForgotPasswordPage() {
                                 <Stethoscope className="h-6 w-6 text-primary" />
                             </div>
                             <span className="text-xl font-black tracking-tight text-primary">
-                                EHR System
+                                MC Portal Clínico
                             </span>
                         </div>
                         <h1 className="text-3xl font-extrabold tracking-tight text-primary">

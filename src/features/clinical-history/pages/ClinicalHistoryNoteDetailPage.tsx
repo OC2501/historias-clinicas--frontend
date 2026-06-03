@@ -10,21 +10,16 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { clinicalHistoryNoteApi } from '@/api';
+import { useClinicalHistoryNoteById } from '../hooks/useClinicalHistoryNotes';
 
 export function ClinicalHistoryNoteDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    const { data: noteRes, isLoading: isLoadingNote } = useQuery({
-        queryKey: ['clinical-history-note', id],
-        queryFn: () => clinicalHistoryNoteApi.getById(id!),
-        enabled: !!id,
-    });
+    const { data: noteRes, isLoading: isLoadingNote } = useClinicalHistoryNoteById(id!);
 
     const note = useMemo(() => noteRes?.data || null, [noteRes]);
 
@@ -87,19 +82,65 @@ export function ClinicalHistoryNoteDetailPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="h-full">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Activity className="h-5 w-5 text-primary" />
-                            Seguimiento Físico / Métricas
+                            Evaluación Objetiva
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        {renderDataRecord(note.seguimiento)}
+                    <CardContent className="space-y-4">
+                        {note.objetivo && (
+                            <div>
+                                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Examen Físico y Signos Vitales</h4>
+                                <p className="text-sm border-l-2 border-primary/20 pl-4 py-1 leading-relaxed whitespace-pre-wrap">
+                                    {note.objetivo}
+                                </p>
+                            </div>
+                        )}
+                        {note.seguimiento && Object.keys(note.seguimiento).length > 0 && (
+                            <div className="pt-2">
+                                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Métricas</h4>
+                                {renderDataRecord(note.seguimiento)}
+                            </div>
+                        )}
+                        {!note.objetivo && (!note.seguimiento || Object.keys(note.seguimiento).length === 0) && (
+                            <p className="text-sm italic text-muted-foreground">No se registró evaluación objetiva.</p>
+                        )}
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="h-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <FileText className="h-5 w-5 text-primary" />
+                            Diagnóstico y Tratamiento Actual
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {note.diagnostico && (
+                            <div>
+                                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Diagnóstico</h4>
+                                <p className="text-sm border-l-2 border-primary/20 pl-4 py-1 leading-relaxed">
+                                    {note.diagnostico}
+                                </p>
+                            </div>
+                        )}
+                        {note.tratamientoActual && (
+                            <div>
+                                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Tratamiento Actual</h4>
+                                <p className="text-sm border-l-2 border-primary/20 pl-4 py-1 leading-relaxed whitespace-pre-wrap">
+                                    {note.tratamientoActual}
+                                </p>
+                            </div>
+                        )}
+                        {!note.diagnostico && !note.tratamientoActual && (
+                            <p className="text-sm italic text-muted-foreground">No se registró diagnóstico ni tratamiento actual.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="md:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Pill className="h-5 w-5 text-primary" />

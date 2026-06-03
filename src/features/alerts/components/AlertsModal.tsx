@@ -78,9 +78,9 @@ export function AlertsModal() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl shadow-2xl border-none p-0 overflow-hidden">
+            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg rounded-2xl shadow-2xl border-none p-0 overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-primary-foreground">
+                <div className="bg-gradient-to-r from-primary to-primary/80 p-4 sm:p-6 text-primary-foreground">
                     <DialogHeader>
                         <div className="flex items-center gap-3 mb-1">
                             <div className="bg-white/20 p-2 rounded-xl">
@@ -97,7 +97,7 @@ export function AlertsModal() {
                 </div>
 
                 {/* Alerts list */}
-                <ScrollArea className="max-h-[360px] px-6 py-4">
+                <ScrollArea className="max-h-[50vh] sm:max-h-[360px] px-4 sm:px-6 py-4">
                     <div className="space-y-3">
                         {alerts.map((alert) => {
                             const config = ALERT_CONFIG[alert.type];
@@ -131,18 +131,18 @@ export function AlertsModal() {
                 </ScrollArea>
 
                 {/* Footer */}
-                <DialogFooter className="px-6 pb-6 pt-2 flex gap-2 flex-row justify-end">
+                <DialogFooter className="px-4 sm:px-6 pb-4 sm:pb-6 pt-2 flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
                     <Button
                         variant="ghost"
                         onClick={handleClose}
-                        className="rounded-xl"
+                        className="rounded-xl w-full sm:w-auto"
                     >
                         Cerrar
                     </Button>
                     <Button
                         onClick={handleMarkAllAndClose}
                         disabled={isMarkingRead}
-                        className="rounded-xl gap-2"
+                        className="rounded-xl gap-2 w-full sm:w-auto"
                     >
                         <CheckCircle className="h-4 w-4" />
                         Marcar todo como leído

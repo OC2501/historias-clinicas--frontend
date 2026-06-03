@@ -1,5 +1,5 @@
 import type { UseFormReturn } from 'react-hook-form';
-import { Loader2, Save, Search, Check } from 'lucide-react';
+import { Loader2, Save, Search, Check, Clock, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,20 @@ import { Status } from '@/types/enums';
 import type { Patient, Doctor, ConsultingRoom } from '@/types';
 import type { AppointmentFormValues } from '@/features/appointment/hooks/useAppointmentForm';
 import { cn } from '@/lib/utils';
+
+const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
+    const totalMinutes = i * 15;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const label = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    const value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return { label, value };
+}).filter(opt => {
+    const hour = parseInt(opt.value.split(':')[0]);
+    return hour >= 6 && hour <= 21; // Rango de 6am a 9pm
+});
 
 interface AppointmentFormUIProps {
     form: UseFormReturn<AppointmentFormValues>;
@@ -184,33 +198,91 @@ export function AppointmentFormUI({
                     />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
                     <FormField
                         control={form.control}
                         name="startTime"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Fecha de inicio</FormLabel>
-                                <FormControl>
-                                    <Input type="datetime-local" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        render={({ field }) => {
+                            const [date, time] = (field.value || '').split('T');
+                            return (
+                                <FormItem>
+                                    <FormLabel>Fecha y Hora de Inicio</FormLabel>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                type="date" 
+                                                value={date} 
+                                                onChange={(e) => field.onChange(`${e.target.value}T${time || '09:00'}`)}
+                                                className="pl-9 h-10"
+                                            />
+                                        </div>
+                                        <Select 
+                                            value={time} 
+                                            onValueChange={(v) => field.onChange(`${date || ''}T${v}`)}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="w-[130px] h-10">
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                                        <SelectValue placeholder="Hora" />
+                                                    </div>
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="max-h-[250px]" position="popper" side="bottom" sideOffset={4} avoidCollisions={false}>
+                                                {TIME_OPTIONS.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
                     />
 
                     <FormField
                         control={form.control}
                         name="endTime"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Fecha de finalización</FormLabel>
-                                <FormControl>
-                                    <Input type="datetime-local" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        render={({ field }) => {
+                            const [date, time] = (field.value || '').split('T');
+                            return (
+                                <FormItem>
+                                    <FormLabel>Fecha y Hora de Finalización</FormLabel>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                type="date" 
+                                                value={date} 
+                                                onChange={(e) => field.onChange(`${e.target.value}T${time || '09:30'}`)}
+                                                className="pl-9 h-10"
+                                            />
+                                        </div>
+                                        <Select 
+                                            value={time} 
+                                            onValueChange={(v) => field.onChange(`${date || ''}T${v}`)}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className="w-[130px] h-10">
+                                                    <div className="flex items-center gap-2">
+                                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                                        <SelectValue placeholder="Hora" />
+                                                    </div>
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="max-h-[250px]" position="popper" side="bottom" sideOffset={4} avoidCollisions={false}>
+                                                {TIME_OPTIONS.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
                     />
                 </div>
 

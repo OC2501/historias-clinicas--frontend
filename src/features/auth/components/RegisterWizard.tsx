@@ -92,15 +92,15 @@ export function RegisterWizard() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700">
+        <div className="space-y-4 animate-in fade-in duration-700">
             {/* Minimalist Header & Step Indicator */}
-            <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-2">
+            <div className="space-y-3">
+                <div className="flex items-center gap-3 mb-1">
                     <div className="bg-primary/10 p-2 rounded-xl">
                         <Stethoscope className="h-6 w-6 text-primary" />
                     </div>
                     <span className="text-xl font-black tracking-tight text-primary">
-                        EHR System
+                        MC Portal Clínico
                     </span>
                 </div>
 
@@ -123,14 +123,14 @@ export function RegisterWizard() {
                 </div>
 
                 {/* Elegant Segmented Progress */}
-                <div className="flex w-full h-1 gap-1.5 pt-2">
+                <div className="flex w-full h-1 gap-1.5 pt-1">
                     <div className={`flex-1 rounded-full transition-all duration-500 ${step >= 1 ? 'bg-primary' : 'bg-muted/20'}`} />
                     <div className={`flex-1 rounded-full transition-all duration-500 ${step >= 2 ? 'bg-primary' : 'bg-muted/20'}`} />
                     <div className={`flex-1 rounded-full transition-all duration-500 ${step >= 3 ? 'bg-primary' : 'bg-muted/20'}`} />
                 </div>
             </div>
 
-            <div className="min-h-[400px]">
+            <div className="min-h-0">
                 {error && (
                     <div className="mb-6 rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive font-medium animate-in slide-in-from-top-2">
                         {error}
@@ -138,11 +138,11 @@ export function RegisterWizard() {
                 )}
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
                         {/* STEP 1: PLAN TYPE */}
                         {step === 1 && (
-                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="grid gap-4 grid-cols-1 xl:grid-cols-2 animate-in fade-in slide-in-from-right-8 duration-500">
                                 <div
                                     className={`group cursor-pointer relative p-0.5 rounded-2xl transition-all duration-300 ${form.watch('planType') === OrganizationPlanType.INDEPENDENT ? 'bg-primary shadow-xl ring-4 ring-primary/5' : 'bg-muted/10 hover:bg-muted/20'}`}
                                     onClick={() => form.setValue('planType', OrganizationPlanType.INDEPENDENT)}
@@ -175,8 +175,8 @@ export function RegisterWizard() {
                                 </div>
 
                                 {form.formState.errors.planType && (
-                                    <p className="text-destructive text-xs font-bold col-span-1 sm:col-span-2 text-center animate-bounce">{form.formState.errors.planType.message}</p>
-                                )}
+                                    <p className="text-destructive text-xs font-bold col-span-1 xl:col-span-2 text-center animate-bounce">{form.formState.errors.planType.message}</p>
+                                ) /* col-span-2 -> col-span-1/xl:col-span-2 */}
                             </div>
                         )}
 
@@ -201,7 +201,7 @@ export function RegisterWizard() {
                                         </FormItem>
                                     )}
                                 />
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
                                         name="organizationType"
@@ -295,7 +295,7 @@ export function RegisterWizard() {
                                         </FormItem>
                                     )}
                                 />
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
                                         name="email"
@@ -357,7 +357,7 @@ export function RegisterWizard() {
                             </div>
                         )}
 
-                        <div className="flex justify-between items-center pt-8 border-t border-muted/20">
+                        <div className="flex justify-between items-center pt-4 border-t border-muted/20">
                             {step > 1 ? (
                                 <Button type="button" variant="ghost" onClick={prevStep} className="px-5 h-12 text-muted-foreground hover:text-primary hover:bg-muted/10 transition-all rounded-xl font-bold">
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Atrás
@@ -380,7 +380,7 @@ export function RegisterWizard() {
                 </Form>
             </div>
 
-            <div className="pt-6 text-center">
+            <div className="pt-3 text-center">
                 <p className="text-muted-foreground text-sm">
                     ¿Ya tiene una cuenta?{' '}
                     <Link to="/login" className="text-primary hover:underline font-extrabold decoration-2 underline-offset-4">

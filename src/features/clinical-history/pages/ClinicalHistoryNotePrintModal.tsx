@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { differenceInYears } from 'date-fns';
 import {
     Dialog,
     DialogContent,
@@ -10,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Download, Loader2, Info, MessageSquare } from 'lucide-react';
 import { pdf } from '@react-pdf/renderer';
-import { EvolutionNotePDF } from '@/reports/EvolutionNotePDF';
+import { EvolutionNotePDF } from '@/features/clinical-history/pdf/EvolutionNotePDF';
 import { toast } from 'sonner';
 
 interface ClinicalHistoryNotePrintModalProps {
@@ -29,9 +30,14 @@ export function ClinicalHistoryNotePrintModal({
     if (!note) return null;
 
     // Obtenemos el nombre del paciente del historial asociado si está disponible
-    const patientName = note.history?.patient
-        ? `${note.history.patient.firstName || ''} ${note.history.patient.lastName || ''}`.trim()
+    const patientObj = note.patient || note.clinicalHistory?.patient || note.history?.patient;
+    const patientName = patientObj
+        ? `${patientObj.firstName || ''} ${patientObj.lastName || ''}`.trim()
         : 'Paciente';
+
+    const patientAge = patientObj?.birthDate 
+        ? differenceInYears(new Date(), new Date(patientObj.birthDate)) 
+        : null;
 
     const handleDownloadNote = async () => {
         setIsGeneratingNote(true);
@@ -40,25 +46,33 @@ export function ClinicalHistoryNotePrintModal({
             const pdfData = {
                 data: {
                     estadoSubjetivo: note.estadoSubjetivo,
+                    objetivo: note.objetivo,
+                    diagnostico: note.diagnostico,
+                    tratamientoActual: note.tratamientoActual,
                     cambiosSintomas: note.cambiosSintomas,
-                    proximaCita: note.proximaCita
+                    proximaCita: note.proximaCita,
+                    horaCita: note.horaCita
                 },
                 seguimiento: {
                     peso: note.peso,
                     presionArterial: note.presionArterial
                 },
                 planAjustado: {
-                    medicacion: note.planManejoAjustado, // Asumiendo este campo basándome en el esquema
-                    indicaciones: note.indicacionesGenerales
+                    medicacion: note.planAjustado?.medicacion || note.planManejoAjustado,
+                    indicaciones: note.planAjustado?.indicaciones || note.indicacionesGenerales
+                },
+                patient: {
+                    name: patientName,
+                    age: patientAge ?? 'N/A'
                 }
             };
 
-            const doc = <EvolutionNotePDF {...pdfData} />;
+            const doc = <EvolutionNotePDF note={note} {...pdfData} />;
             const blob = await pdf(doc).toBlob();
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Nota_Evolucion_${note.history?.patient?.lastName || 'Paciente'}_${note.id.substring(0, 5)}.pdf`;
+            link.download = `Nota_Evolucion_${patientName.replace(/\s+/g, '_')}_${note.id.substring(0, 5)}.pdf`;
             link.click();
             URL.revokeObjectURL(url);
             toast.success('Nota de evolución descargada');

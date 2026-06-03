@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
     DialogDescription,
-    DialogFooter 
+    DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, Download, FileText, Loader2, Info } from 'lucide-react';
 import { pdf } from '@react-pdf/renderer';
-import { MedicalReportPDF } from '@/reports/MedicalReportPDF';
-import { EvolutionNotePDF } from '@/reports/EvolutionNotePDF';
+import { MedicalReportPDF } from '@/features/clinical-history/pdf/MedicalReportPDF';
+import { EvolutionNotePDF } from '@/features/clinical-history/pdf/EvolutionNotePDF';
 import { toast } from 'sonner';
 
 interface ClinicalHistoryPrintModalProps {
@@ -20,10 +20,10 @@ interface ClinicalHistoryPrintModalProps {
     history: any;
 }
 
-export function ClinicalHistoryPrintModal({ 
-    isOpen, 
-    onOpenChange, 
-    history 
+export function ClinicalHistoryPrintModal({
+    isOpen,
+    onOpenChange,
+    history
 }: ClinicalHistoryPrintModalProps) {
     const [isGeneratingHistory, setIsGeneratingHistory] = useState(false);
     const [isGeneratingNote, setIsGeneratingNote] = useState(false);
@@ -36,10 +36,10 @@ export function ClinicalHistoryPrintModal({
         setIsGeneratingHistory(true);
         try {
             const doc = (
-                <MedicalReportPDF 
-                    data={history} 
-                    patient={history.patient} 
-                    doctor={history.doctor} 
+                <MedicalReportPDF
+                    data={history}
+                    patient={history.patient}
+                    doctor={history.doctor}
                 />
             );
             const blob = await pdf(doc).toBlob();
@@ -60,9 +60,9 @@ export function ClinicalHistoryPrintModal({
         // Si el backend no envía las notas directamente en el objeto history, 
         // podríamos necesitar cargarlas, pero por ahora asumimos que vienen o 
         // usamos los datos de la historia para generar una nota de evolución equivalente.
-        
+
         const latestNote = history.notes?.[0] || history; // Fallback a la historia misma si no hay notas específicas
-        
+
         setIsGeneratingNote(true);
         try {
             const doc = <EvolutionNotePDF note={latestNote} />;
@@ -107,8 +107,8 @@ export function ClinicalHistoryPrintModal({
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             className="h-16 justify-start gap-4 px-4 border-primary/20 hover:bg-primary/5 hover:border-primary/40 group transition-all"
                             onClick={handlePrintHistory}
                             disabled={isGeneratingHistory}
@@ -122,17 +122,17 @@ export function ClinicalHistoryPrintModal({
                             </div>
                         </Button>
 
-                        <Button 
+                         <Button
                             variant="outline"
-                            className="h-16 justify-start gap-4 px-4 border-secondary/20 hover:bg-secondary/5 hover:border-secondary/40 group transition-all"
+                            className="h-16 justify-start gap-4 px-4 border-primary/20 hover:bg-primary/5 hover:border-primary/40 group transition-all"
                             onClick={handleDownloadNote}
                             disabled={isGeneratingNote}
                         >
-                            <div className="p-2 bg-secondary/10 text-secondary rounded-lg group-hover:bg-secondary group-hover:text-white transition-all">
+                            <div className="p-2 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                                 {isGeneratingNote ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                             </div>
                             <div className="text-left">
-                                <p className="font-bold text-secondary">Descargar Nota de Evolución</p>
+                                <p className="font-bold text-primary">Descargar Nota de Evolución</p>
                                 <p className="text-xs text-muted-foreground">Resumen subjetivo y plan actual.</p>
                             </div>
                         </Button>

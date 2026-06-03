@@ -27,6 +27,8 @@ import { format, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { DataTable } from '@/components/tables/DataTable';
+import { Carousel } from '@/components/ui/carousel';
+import { clinicalHistoryApi } from '@/api';
 
 const STATUS_COLORS: Record<string, string> = {
     'SCHEDULED': 'bg-primary/10 text-primary border-primary/20',
@@ -75,6 +77,16 @@ export function DashboardPage() {
         enabled: !!user,
     });
     const doctors = doctorsRes?.data || [];
+
+    const { data: recentHistoriesRes, isLoading: isLoadingRecent } = useQuery({
+        queryKey: ['recent-clinical-histories'],
+        queryFn: async () => {
+            const res = await clinicalHistoryApi.getAll({ page: 1, limit: 10 });
+            return res.data;
+        },
+        enabled: !!user,
+    });
+    const recentHistories = recentHistoriesRes?.data || [];
 
     // Extracción robusta de las estadísticas
     const dashboardData = useMemo(() => {
@@ -220,6 +232,77 @@ export function DashboardPage() {
                         </Card>
                     ))}
             </div>
+
+            {/* Recent Patients Carousel */}
+            {!isLoadingRecent && recentHistories.length > 0 && (
+                <Card className="border-none shadow-sm overflow-hidden bg-gradient-to-br from-card to-muted/20">
+                    <CardHeader className="pb-0">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <History className="h-5 w-5 text-primary" />
+                                <CardTitle className="text-xl font-bold tracking-tight">Pacientes Recientes</CardTitle>
+                            </div>
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link to="/clinical-history" className="text-primary font-semibold">Ver todos</Link>
+                            </Button>
+                        </div>
+                        <CardDescription>
+                            Acceda rápidamente a los últimos pacientes atendidos.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <Carousel
+                            items={recentHistories}
+                            onCardClick={(h) => navigate(`/clinical-history/${h.id}`)}
+                            renderCard={(h) => (
+                                <div 
+                                    onClick={() => navigate(`/clinical-history/${h.id}`)}
+                                    className="w-full h-[320px] bg-card border-2 border-primary/10 rounded-2xl p-6 flex flex-col justify-between shadow-md hover:shadow-xl cursor-pointer overflow-hidden relative group/card"
+                                >
+                                    {/* Decorative elements */}
+                                    <div className="absolute -right-8 -top-8 w-24 h-24 bg-primary/5 rounded-full group-hover/card:scale-150 transition-transform duration-700" />
+                                    
+                                    <div className="space-y-3">
+                                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                            <Users className="h-6 w-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-lg leading-tight line-clamp-2">
+                                                {h.patient?.firstName} {h.patient?.lastName}
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mt-1">
+                                                {h.specialty || 'Consulta General'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] text-muted-foreground uppercase font-bold">Última atención</span>
+                                            <span className="text-sm font-semibold flex items-center gap-1.5">
+                                                <Calendar className="h-3.5 w-3.5 text-primary" />
+                                                {format(new Date(h.createdAt), "d 'de' MMM, yyyy", { locale: es })}
+                                            </span>
+                                        </div>
+                                        
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="w-full rounded-xl border-primary/20 hover:bg-primary hover:text-primary-foreground group-hover/card:bg-primary group-hover/card:text-primary-foreground transition-all"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/clinical-history/${h.id}`);
+                                            }}
+                                        >
+                                            Ver Historia
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid gap-6 md:grid-cols-7">
                 {/* Upcoming Appointments */}

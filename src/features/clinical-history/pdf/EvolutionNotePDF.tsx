@@ -121,16 +121,20 @@ interface EvolutionNotePDFProps {
     data?: any;
     seguimiento?: any;
     planAjustado?: any;
+    patient?: { name: string; age: number | string };
 }
 
-export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguimiento, planAjustado: propPlanAjustado }: EvolutionNotePDFProps) => {
-    const today = new Date();
-    const formattedDate = format(today, "dd 'de' MMMM, yyyy", { locale: es });
+export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguimiento, planAjustado: propPlanAjustado, patient }: EvolutionNotePDFProps) => {
+    const displayDate = note?.fecha ? new Date(note.fecha) : new Date();
+    const formattedDate = format(displayDate, "dd 'de' MMMM, yyyy 'a las' hh:mm b", { locale: es });
 
     // Handle both ClinicalHistoryNote and ClinicalHistory (fallback)
     // We use propData if provided (from spreading data sections) or extract from note
     const data = propData || {
         estadoSubjetivo: note?.estadoSubjetivo || note?.motivoConsulta || '',
+        objetivo: note?.objetivo || '',
+        diagnostico: note?.diagnostico || '',
+        tratamientoActual: note?.tratamientoActual || '',
         cambiosSintomas: note?.cambiosSintomas || note?.enfermedadActual || '',
         proximaCita: note?.proximaCita || ''
     };
@@ -139,10 +143,19 @@ export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguim
     const seguimiento = propSeguimiento || note?.seguimiento || note?.formData?.examenFisico || {};
     const planAjustado = propPlanAjustado || note?.planAjustado || note?.formData?.planManejo || {};
 
-    const formatProximaCita = (dateStr?: string) => {
+    const formatProximaCita = (dateStr?: string, hora?: string) => {
         if (!dateStr) return null;
         try {
-            return format(new Date(dateStr), "dd/MM/yyyy") + ' (Estimada)';
+            const datePart = format(new Date(dateStr), "dd/MM/yyyy");
+            if (hora) {
+                // Si la hora viene en formato HH:mm, la convertimos a 12h
+                const [h, m] = hora.split(':');
+                const dateWithTime = new Date();
+                dateWithTime.setHours(parseInt(h), parseInt(m));
+                const formattedTime = format(dateWithTime, 'hh:mm b');
+                return `${datePart} a las ${formattedTime}`;
+            }
+            return `${datePart} (Estimada)`;
         } catch {
             return dateStr;
         }
@@ -164,7 +177,14 @@ export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguim
                         <Text style={styles.headerTitle}>NOTA DE EVOLUCIÓN</Text>
                         <Text style={styles.headerSubtitle}>Registro de seguimiento clínico</Text>
                     </View>
-                    <Text style={styles.headerDate}>{formattedDate}</Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.headerDate}>{formattedDate}</Text>
+                        {patient && (
+                            <Text style={[styles.headerSubtitle, { color: '#ffffff', marginTop: 5, fontSize: 11 }]}>
+                                {patient.name} ({patient.age} años)
+                            </Text>
+                        )}
+                    </View>
                 </View>
 
                 {/* I. Anamnesis de Evolución */}
@@ -182,39 +202,66 @@ export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguim
                     )}
                 </View>
 
-                {/* II. Datos de Seguimiento */}
-                {hasSeguimiento && (
+                {/* II. Evaluación Objetiva */}
+                {(data.objetivo || hasSeguimiento) && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>II. Datos de Seguimiento</Text>
-                        <View style={styles.card}>
-                            <View style={styles.grid}>
-                                {seguimiento.peso && seguimiento.peso !== 'N/A' && (
-                                    <View style={styles.gridItem}>
-                                        <Text style={styles.label}>Peso (kg):</Text>
-                                        <Text style={styles.value}>{seguimiento.peso}</Text>
-                                    </View>
-                                )}
-                                {seguimiento.presionArterial && seguimiento.presionArterial !== 'N/A' && (
-                                    <View style={styles.gridItem}>
-                                        <Text style={styles.label}>Presión Arterial (mmHg):</Text>
-                                        <Text style={styles.value}>{seguimiento.presionArterial}</Text>
-                                    </View>
-                                )}
-                                {seguimiento.frecuenciaCardiaca && seguimiento.frecuenciaCardiaca !== 'N/A' && (
-                                    <View style={styles.gridItem}>
-                                        <Text style={styles.label}>Frec. Cardíaca (lpm):</Text>
-                                        <Text style={styles.value}>{seguimiento.frecuenciaCardiaca}</Text>
-                                    </View>
-                                )}
+                        <Text style={styles.sectionTitle}>II. Evaluación Objetiva</Text>
+                        {data.objetivo && (
+                            <View style={{ marginBottom: 10 }}>
+                                <Text style={styles.label}>Examen Físico y Signos Vitales:</Text>
+                                <Text style={styles.value}>{stripHtml(data.objetivo)}</Text>
                             </View>
-                        </View>
+                        )}
+                        {hasSeguimiento && (
+                            <View style={styles.card}>
+                                <View style={styles.grid}>
+                                    {seguimiento.peso && seguimiento.peso !== 'N/A' && (
+                                        <View style={styles.gridItem}>
+                                            <Text style={styles.label}>Peso (kg):</Text>
+                                            <Text style={styles.value}>{seguimiento.peso}</Text>
+                                        </View>
+                                    )}
+                                    {seguimiento.presionArterial && seguimiento.presionArterial !== 'N/A' && (
+                                        <View style={styles.gridItem}>
+                                            <Text style={styles.label}>Presión Arterial (mmHg):</Text>
+                                            <Text style={styles.value}>{seguimiento.presionArterial}</Text>
+                                        </View>
+                                    )}
+                                    {seguimiento.frecuenciaCardiaca && seguimiento.frecuenciaCardiaca !== 'N/A' && (
+                                        <View style={styles.gridItem}>
+                                            <Text style={styles.label}>Frec. Cardíaca (lpm):</Text>
+                                            <Text style={styles.value}>{seguimiento.frecuenciaCardiaca}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        )}
                     </View>
                 )}
 
-                {/* III. Plan Ajustado */}
+                {/* III. Diagnóstico y Tratamiento Actual */}
+                {(data.diagnostico || data.tratamientoActual) && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>III. Diagnóstico y Tratamiento Actual</Text>
+                        {data.diagnostico && (
+                            <View style={{ marginBottom: 10 }}>
+                                <Text style={styles.label}>Diagnóstico:</Text>
+                                <Text style={styles.value}>{stripHtml(data.diagnostico)}</Text>
+                            </View>
+                        )}
+                        {data.tratamientoActual && (
+                            <View style={{ marginBottom: 10 }}>
+                                <Text style={styles.label}>Tratamiento Actual:</Text>
+                                <Text style={styles.value}>{stripHtml(data.tratamientoActual)}</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* IV. Plan Ajustado */}
                 {hasPlan && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>III. Plan Ajustado</Text>
+                        <Text style={styles.sectionTitle}>IV. Plan Ajustado</Text>
                         <View style={styles.highlightCard}>
                             {(planAjustado.medicacion && planAjustado.medicacion !== 'Ninguna') && (
                                 <View style={{ marginBottom: 8 }}>
@@ -238,15 +285,15 @@ export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguim
                     </View>
                 )}
 
-                {/* VI. Próxima Visita */}
+                {/* V. Próxima Visita */}
                 {data.proximaCita && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>IV. Próxima Visita</Text>
+                        <Text style={styles.sectionTitle}>V. Próxima Visita</Text>
                         <View style={styles.nextVisitCard}>
                             <View>
                                 <Text style={styles.label}>Fecha Estimada:</Text>
                                 <Text style={[styles.value, { fontSize: 12, fontWeight: 'bold' }]}>
-                                    {formatProximaCita(data.proximaCita)}
+                                    {formatProximaCita(data.proximaCita, note?.horaCita)}
                                 </Text>
                             </View>
                         </View>

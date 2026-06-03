@@ -8,6 +8,7 @@ import {
     Calendar,
     Stethoscope,
     Clock,
+    History,
     ChevronDown,
     ChevronUp
 } from 'lucide-react';
@@ -18,9 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { ClinicalHistory } from '@/types';
+import type { ClinicalHistory, ClinicalHistoryNote } from '@/types';
 import { cn } from '@/lib/utils';
 import { useClinicalHistory } from '@/features/clinical-history/hooks/useClinicalHistory';
+import { Carousel } from '@/components/ui/carousel';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 export function ClinicalHistoryDetailPage() {
     const navigate = useNavigate();
@@ -29,11 +32,13 @@ export function ClinicalHistoryDetailPage() {
     if (isLoading) return <div className="p-8 text-center text-muted-foreground">Cargando...</div>;
     if (!history) return <div className="p-8 text-center text-muted-foreground">No se encontró la historia clínica.</div>;
 
+    const recentNotes = (history.notes || []).slice(0, 10);
+
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
+        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-700">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-primary/10 transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
@@ -44,12 +49,75 @@ export function ClinicalHistoryDetailPage() {
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Button onClick={() => navigate(`/clinical-history/notes/new?historyId=${history.id}`)} className="w-full sm:w-auto">
+                    <Button onClick={() => navigate(`/clinical-history/notes/new?historyId=${history.id}`)} className="w-full sm:w-auto shadow-lg hover:scale-105 transition-all">
                         <Plus className="mr-2 h-4 w-4" />
                         Añadir Nota
                     </Button>
                 </div>
             </div>
+
+            {/* Recent Notes Carousel */}
+            {recentNotes.length > 0 && (
+                <Card className="border-none shadow-sm bg-gradient-to-br from-card to-muted/20">
+                    <CardHeader className="pb-0">
+                        <div className="flex items-center gap-2">
+                            <History className="h-5 w-5 text-primary" />
+                            <CardTitle className="text-xl font-bold tracking-tight">Evoluciones Recientes</CardTitle>
+                        </div>
+                        <CardDescription>
+                            Revise rápidamente los últimos cambios clínicos registrados.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <Carousel
+                            items={recentNotes}
+                            onCardClick={(note) => {
+                                if (!expandedEvents[note.id]) toggleExpand(note.id);
+                                setTimeout(() => {
+                                    document.getElementById(`event-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
+                            }}
+                            renderCard={(note: ClinicalHistoryNote) => (
+                                <div 
+                                    onClick={() => {
+                                        if (!expandedEvents[note.id]) toggleExpand(note.id);
+                                        setTimeout(() => {
+                                            document.getElementById(`event-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }, 100);
+                                    }}
+                                    className="w-full h-[300px] bg-card border-2 border-primary/10 rounded-2xl p-5 flex flex-col justify-between shadow-md hover:shadow-xl cursor-pointer relative overflow-hidden group/note"
+                                >
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10">
+                                                {format(new Date(note.fecha), 'dd MMM yyyy', { locale: es })}
+                                            </Badge>
+                                            <Clock className="h-4 w-4 text-muted-foreground/30" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-[10px] font-bold text-primary uppercase tracking-widest">Estado Subjetivo</h4>
+                                            <p className="text-xs text-muted-foreground line-clamp-4 italic leading-relaxed">
+                                                "{note.estadoSubjetivo}"
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 pt-2 border-t border-muted">
+                                        <div className="flex flex-col">
+                                            <span className="text-[9px] font-bold text-muted-foreground uppercase">Diagnóstico</span>
+                                            <span className="text-xs font-semibold line-clamp-1">{note.diagnostico || 'N/A'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[10px] text-primary font-bold">
+                                            <User className="h-3 w-3" />
+                                            Dr. {note.doctor?.user?.name || 'Médico'}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Patient Summary Card */}
             <Card className="bg-muted/30">
@@ -94,7 +162,7 @@ export function ClinicalHistoryDetailPage() {
             {/* Timeline */}
             <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary before:via-primary/50 before:to-transparent">
                 {allEvents.map((event) => (
-                    <div key={event.id} className="relative flex items-start gap-10">
+                    <div key={event.id} id={`event-${event.id}`} className="relative flex items-start gap-10 scroll-mt-20">
                         {/* Dot */}
                         <div className="absolute left-0 mt-1.5 h-10 w-10 flex items-center justify-center rounded-full bg-background border-2 border-primary z-10">
                             {event.isInitial ? (
@@ -197,11 +265,7 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
                     <div>
                         <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Antecedentes Personales</h4>
                         <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none">
-                            {typeof history.antecedentesPersonales === 'string' ? (
-                                <div dangerouslySetInnerHTML={{ __html: history.antecedentesPersonales }} />
-                            ) : (
-                                <div dangerouslySetInnerHTML={{ __html: (history.antecedentesPersonales as any).descripcion || 'Ninguno' }} />
-                            )}
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(typeof history.antecedentesPersonales === 'string' ? history.antecedentesPersonales : (history.antecedentesPersonales as any).descripcion || 'Ninguno') }} />
                         </div>
                     </div>
                 )}
@@ -211,7 +275,7 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
                         {(() => {
                             const antFam = history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares;
                             return typeof antFam === 'string' ? (
-                                <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: antFam }} />
+                                <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(antFam) }} />
                             ) : (
                                 <div className="text-sm border-l-2 border-primary/20 pl-4">{String(antFam)}</div>
                             );
@@ -223,9 +287,9 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
                         <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Hábitos Psicobiológicos</h4>
                         <div className="text-sm border-l-2 border-secondary/20 pl-4 prose-sm max-w-none">
                             {typeof history.habitos === 'string' ? (
-                                <div dangerouslySetInnerHTML={{ __html: history.habitos }} />
+                                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(history.habitos) }} />
                             ) : (
-                                <div dangerouslySetInnerHTML={{ __html: (history.habitos as any).descripcion || 'N/A' }} />
+                                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((history.habitos as any).descripcion || 'N/A') }} />
                             )}
                         </div>
                     </div>
@@ -247,7 +311,7 @@ function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
                         {history.examenFisico.otros && (
                             <div className="mt-2">
                                 <span className="text-xs text-muted-foreground font-semibold uppercase">{formatLabel('otros')}</span>
-                                <div className="text-sm border-l-2 border-primary/20 pl-4 mt-1 prose-sm" dangerouslySetInnerHTML={{ __html: history.examenFisico.otros }} />
+                                <div className="text-sm border-l-2 border-primary/20 pl-4 mt-1 prose-sm" dangerouslySetInnerHTML={{ __html: sanitizeHtml(history.examenFisico.otros) }} />
                             </div>
                         )}
                     </div>
@@ -313,13 +377,22 @@ function EvolutionNoteDetail({ note }: { note: any }) {
                 </p>
             </div>
 
+            {note.cambiosSintomas && (
+                <div>
+                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Cambios en Síntomas</h4>
+                    <p className="text-sm border-l-2 border-primary/20 pl-4 italic">
+                        {note.cambiosSintomas}
+                    </p>
+                </div>
+            )}
+
             {note.seguimiento && Object.keys(note.seguimiento).length > 0 && (
                 <div>
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Seguimiento</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Evaluación Objetiva (Examen Físico)</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {Object.entries(note.seguimiento).map(([key, value]) => (
-                            <div key={key} className="text-sm flex justify-between p-2 rounded bg-muted/30">
-                                <span className="text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                            <div key={key} className="text-sm flex flex-col p-2 rounded bg-muted/30 border border-muted">
+                                <span className="text-[10px] text-muted-foreground uppercase font-bold">{formatLabel(key)}:</span>
                                 <span className="font-medium">{String(value)}</span>
                             </div>
                         ))}
@@ -327,17 +400,40 @@ function EvolutionNoteDetail({ note }: { note: any }) {
                 </div>
             )}
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {note.diagnostico && (
+                    <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
+                        <h4 className="text-[10px] font-bold text-primary uppercase mb-1">Diagnóstico</h4>
+                        <p className="text-sm font-semibold">{note.diagnostico}</p>
+                    </div>
+                )}
+                {note.tratamientoActual && (
+                    <div className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                        <h4 className="text-[10px] font-bold text-emerald-500 uppercase mb-1">Tratamiento Actual</h4>
+                        <p className="text-sm font-semibold">{note.tratamientoActual}</p>
+                    </div>
+                )}
+            </div>
+
             {note.planAjustado && (
                 <div>
                     <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Plan Ajustado</h4>
-                    <p className="text-sm">{typeof note.planAjustado === 'string' ? note.planAjustado : JSON.stringify(note.planAjustado)}</p>
+                    <p className="text-sm">
+                        {typeof note.planAjustado === 'string' 
+                            ? note.planAjustado 
+                            : (note.planAjustado?.indicaciones || note.planAjustado?.planManejo || JSON.stringify(note.planAjustado))
+                        }
+                    </p>
                 </div>
             )}
 
             {note.proximaCita && (
                 <div className="flex items-center gap-2 text-primary font-medium">
                     <Calendar className="h-4 w-4" />
-                    <span className="text-sm">Próxima cita programada para el {format(new Date(note.proximaCita), 'PPPP', { locale: es })}</span>
+                    <span className="text-sm">
+                        Próxima cita programada para el {format(new Date(note.proximaCita), 'PPPP', { locale: es })}
+                        {note.horaCita && ` a las ${format(new Date(`2000-01-01T${note.horaCita}`), 'hh:mm b', { locale: es })}`}
+                    </span>
                 </div>
             )}
         </div>

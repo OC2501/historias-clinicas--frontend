@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Stethoscope, ShieldCheck, Activity, HeartPulse } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAuthStore } from '@/store/auth.store';
+import { OrganizationRole, SystemRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,17 +38,13 @@ export function LoginPage() {
         setError(null);
         try {
             await login(data);
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const user = JSON.parse(storedUser);
-                if ((user.organizationRole || user.systemRole) === 'ADMIN') {
-                    navigate('/settings/users');
-                } else {
-                    navigate('/');
-                }
-            } else {
-                navigate('/');
-            }
+            // Leer el usuario directamente desde el store (no de localStorage con key incorrecta)
+            const user = useAuthStore.getState().user;
+            const isAdmin =
+                user?.organizationRole === OrganizationRole.ADMIN ||
+                user?.organizationRole === OrganizationRole.OWNER ||
+                user?.systemRole === SystemRole.SUPERADMIN;
+            navigate(isAdmin ? '/settings/users' : '/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión. Verifique sus credenciales.');
         } finally {
@@ -65,7 +63,7 @@ export function LoginPage() {
                                 <Stethoscope className="h-6 w-6 text-primary" />
                             </div>
                             <span className="text-xl font-black tracking-tight text-primary">
-                                EHR System
+                                MC Portal Clínico
                             </span>
                         </div>
                         <h1 className="text-3xl font-extrabold tracking-tight text-primary">
@@ -191,7 +189,7 @@ export function LoginPage() {
                         </div>
                         <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight">
                             Bienvenido a <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">EHR System</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">MC Portal Clínico</span>
                         </h2>
                         <p className="text-lg lg:text-xl text-white/70 max-w-md leading-relaxed font-light">
                             Gestión inteligente y automatizada diseñada para los mejores centros de salud.

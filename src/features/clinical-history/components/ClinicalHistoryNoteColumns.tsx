@@ -22,7 +22,14 @@ export const getClinicalHistoryNoteColumns = (
 ): Column<ClinicalHistoryNote>[] => [
     {
         header: 'Fecha',
-        accessorKey: (note) => note?.fecha ? format(new Date(note.fecha), 'dd/MM/yyyy') : 'S/F',
+        accessorKey: (note) => note?.fecha ? format(new Date(note.fecha), 'dd/MM/yyyy hh:mm b') : 'S/F',
+    },
+    {
+        header: 'Paciente',
+        accessorKey: (note: any) => {
+            const patient = note.patient || note.clinicalHistory?.patient;
+            return patient ? `${patient.firstName} ${patient.lastName}` : 'Cargando...';
+        },
     },
     {
         header: 'Estado Subjetivo',

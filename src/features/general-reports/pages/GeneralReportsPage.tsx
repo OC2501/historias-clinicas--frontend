@@ -186,7 +186,7 @@ export default function GeneralReportsPage() {
             </Button>
             <Button
               size="lg"
-              className="flex-1 xl:flex-none px-6 md:px-10 rounded-xl md:rounded-[1.5rem] h-12 md:h-14 font-black tracking-tight bg-primary text-white shadow-2xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+              className="flex-1 xl:flex-none px-6 md:px-10 rounded-xl md:rounded-[1.5rem] h-12 md:h-14 font-black tracking-tight bg-primary text-primary-foreground shadow-2xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
               onClick={handleExportPDF}
               disabled={isExporting || isLoading}
             >

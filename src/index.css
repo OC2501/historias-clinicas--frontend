@@ -48,66 +48,66 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #F6F3EA;
-  --foreground: #303854;
-  --card: #FFFFFF;
-  --card-foreground: #303854;
+  --background: #F9F8F3; /* Fondo lino/crema premium y suave */
+  --foreground: #262C3A; /* Texto azul marino oscuro */
+  --card: #FFFFFF; /* Tarjetas en blanco puro */
+  --card-foreground: #262C3A;
   --popover: #FFFFFF;
-  --popover-foreground: #303854;
-  --primary: #303854;
-  --primary-foreground: #F6F3EA;
-  --secondary: #C2CDD5;
-  --secondary-foreground: #303854;
-  --muted: #C2CDD5;
-  --muted-foreground: #475569;
-  --accent: #C2CDD5;
-  --accent-foreground: #303854;
+  --popover-foreground: #262C3A;
+  --primary: #262C3A; /* Acciones principales en azul marino oscuro */
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4EFE0; /* Fondo crema secundario */
+  --secondary-foreground: #262C3A;
+  --muted: #F4EFE0;
+  --muted-foreground: #6E768A;
+  --accent: #262C3A; /* Destaques también en el mismo azul marino oscuro */
+  --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #C2CDD5;
-  --input: #C2CDD5;
-  --ring: #303854;
+  --border: #EBE8DC; /* Bordes cálidos */
+  --input: #EBE8DC;
+  --ring: #262C3A;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #303854;
-  --sidebar-primary: #303854;
-  --sidebar-primary-foreground: #F6F3EA;
-  --sidebar-accent: #C2CDD5;
-  --sidebar-accent-foreground: #303854;
-  --sidebar-border: #C2CDD5;
-  --sidebar-ring: #303854;
+  --sidebar: #262C3A; /* Barra lateral en azul marino */
+  --sidebar-foreground: #A6B0C3;
+  --sidebar-primary: #FFFFFF; /* Elemento activo en blanco para máximo contraste */
+  --sidebar-primary-foreground: #262C3A; /* Texto del elemento activo en azul marino */
+  --sidebar-accent: #333B4E;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #333B4E;
+  --sidebar-ring: #262C3A;
 }
 
 .dark {
-  --background: #1a1f2e; /* Una versión más oscura del azul marino para fondo */
-  --foreground: #F6F3EA;
-  --card: #242b3d;
-  --card-foreground: #F6F3EA;
-  --popover: #242b3d;
-  --popover-foreground: #F6F3EA;
-  --primary: #C2CDD5; /* Invertimos para que resalte en oscuro */
-  --primary-foreground: #1a1f2e;
-  --secondary: #303854;
-  --secondary-foreground: #F6F3EA;
-  --muted: #303854;
+  --background: #1c212c; /* Versión más oscura de #262C3A */
+  --foreground: #FFFFFF;
+  --card: #262C3A; /* El color azul marino principal */
+  --card-foreground: #FFFFFF;
+  --popover: #262C3A;
+  --popover-foreground: #FFFFFF;
+  --primary: #FFFFFF; /* Blanco en modo oscuro para resaltar sobre el fondo marino */
+  --primary-foreground: #262C3A;
+  --secondary: #262C3A;
+  --secondary-foreground: #FFFFFF;
+  --muted: #353c4d;
   --muted-foreground: #94a3b8;
-  --accent: #303854;
-  --accent-foreground: #F6F3EA;
+  --accent: #FFFFFF;
+  --accent-foreground: #262C3A;
   --destructive: #7f1d1d;
-  --border: #303854;
-  --input: #303854;
-  --ring: #C2CDD5;
-  --sidebar: #242b3d;
-  --sidebar-foreground: #F6F3EA;
-  --sidebar-primary: #C2CDD5;
-  --sidebar-primary-foreground: #1a1f2e;
-  --sidebar-accent: #303854;
-  --sidebar-accent-foreground: #F6F3EA;
-  --sidebar-border: #303854;
-  --sidebar-ring: #C2CDD5;
+  --border: #353c4d;
+  --input: #353c4d;
+  --ring: #FFFFFF;
+  --sidebar: #262C3A;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FFFFFF;
+  --sidebar-primary-foreground: #262C3A;
+  --sidebar-accent: #353c4d;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #353c4d;
+  --sidebar-ring: #FFFFFF;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -122,6 +122,44 @@
 
   body {
     @apply bg-background text-foreground m-0 p-0 overflow-hidden font-sans;
+  }
+
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(38, 44, 58, 0.15);
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(38, 44, 58, 0.35);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Firefox Scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(38, 44, 58, 0.15) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   }
 }
 

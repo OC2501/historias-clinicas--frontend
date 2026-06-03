@@ -145,7 +145,7 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
             isMobile && "w-full border-none shadow-none"
         )}>
             {/* Logo Area */}
-            <div className="flex h-16 items-center border-b px-4 overflow-hidden">
+            <div className="flex h-16 items-center border-b px-4 overflow-hidden shrink-0">
                 <div className={cn(
                     "flex items-center gap-3 transition-all duration-300",
                     !effectiveIsOpen && "mx-auto justify-center"
@@ -155,7 +155,7 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                     </div>
                     {effectiveIsOpen && (
                         <span className="text-xl font-black tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent truncate animate-in fade-in slide-in-from-left-2">
-                            EHR System
+                            MC Portal Clínico
                         </span>
                     )}
                 </div>
@@ -178,7 +178,7 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                 </Button>
             )}
 
-            <ScrollArea className="flex-1 px-3 py-6">
+            <ScrollArea className="flex-1 min-h-0 px-3 py-6">
                 {/* Main Navigation */}
                 <div className="space-y-1">
                     {mainNavItems.filter(canAccess).map((item) => (
@@ -259,7 +259,7 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                 )}
             </ScrollArea>
 
-            <div className="p-4 border-t bg-muted/5">
+            <div className="p-4 border-t bg-muted/5 shrink-0">
                 <div className={cn(
                     "bg-primary/5 rounded-2xl p-4 border border-primary/10 transition-all duration-300 overflow-hidden",
                     !effectiveIsOpen && "p-2 items-center"

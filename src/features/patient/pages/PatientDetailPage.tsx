@@ -23,7 +23,7 @@ import { es } from 'date-fns/locale';
 import { usePatient } from '@/features/patient/hooks/usePatient';
 import { PatientDetailHeader, PatientGeneralInfo } from '@/features/patient/components/PatientDetailComponents';
 import { pdf } from '@react-pdf/renderer';
-import { PatientFullHistoryPDF } from '@/reports/PatientFullHistoryPDF';
+import { PatientFullHistoryPDF } from '@/features/patient/pdf/PatientFullHistoryPDF';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { doctorsApi } from '@/api';
