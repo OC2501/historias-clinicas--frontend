@@ -168,21 +168,21 @@ export function DashboardPage() {
             {/* Onboarding / Missing Profile Alert */}
             {user?.organizationRole === 'DOCTOR' && 
             (!user?.doctorProfile?.specialty || !user?.doctorProfile?.licenseNumber) && (
-                <Card className="border-none shadow-lg bg-primary text-primary-foreground overflow-hidden mb-6">
+                <Card className="border-none shadow-lg bg-[#262C3A] text-white overflow-hidden mb-6">
                     <CardContent className="p-0">
                         <div className="flex flex-col md:flex-row items-center">
                             <div className="p-8 flex-1 space-y-4">
-                                <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                                <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm text-white">
                                     <ShieldAlert className="h-3.5 w-3.5" />
                                     Acción Requerida
                                 </div>
                                 <h2 className="text-3xl font-black leading-tight">Activa tu Perfil Profesional</h2>
-                                <p className="text-primary-foreground/90 text-lg font-medium leading-relaxed max-w-xl">
+                                <p className="text-white/90 text-lg font-medium leading-relaxed max-w-xl">
                                     Para asociar pacientes a tus consultas y acceder a tus estadísticas personalizadas, primero necesitamos configurar tu especialidad y licencia médica.
                                 </p>
                                 <Button
                                     size="lg"
-                                    className="bg-white text-primary hover:bg-white/90 font-bold h-12 px-8 rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95"
+                                    className="bg-white text-[#262C3A] hover:bg-white/90 font-bold h-12 px-8 rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95"
                                     onClick={() => navigate('/doctor/setup')}
                                 >
                                     <Award className="mr-2 h-5 w-5" />
@@ -190,7 +190,7 @@ export function DashboardPage() {
                                 </Button>
                             </div>
                             <div className="hidden md:flex relative p-8">
-                                <div className="absolute inset-0 bg-gradient-to-l from-primary/50 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-l from-[#262C3A]/50 to-transparent" />
                                 <Stethoscope className="h-48 w-48 text-white/10 -rotate-12" />
                             </div>
                         </div>
