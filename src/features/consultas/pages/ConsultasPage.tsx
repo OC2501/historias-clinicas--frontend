@@ -134,7 +134,8 @@ export function ConsultasPage() {
           data: {
             ...data,
             hora: data.hora || undefined,
-            doctorId: data.doctorId || undefined,
+            doctorId: data.doctorId ? data.doctorId : undefined,
+            nurseId: data.nurseId ? data.nurseId : undefined,
             sintomas: data.sintomas || undefined,
             presionArterial: data.presionArterial || undefined,
             frecuenciaCardiaca: data.frecuenciaCardiaca || undefined,
@@ -163,6 +164,7 @@ export function ConsultasPage() {
           ...data,
           hora: data.hora || undefined,
           doctorId: data.doctorId || undefined,
+          nurseId: data.nurseId || undefined,
           sintomas: data.sintomas || undefined,
           presionArterial: data.presionArterial || undefined,
           frecuenciaCardiaca: data.frecuenciaCardiaca || undefined,
