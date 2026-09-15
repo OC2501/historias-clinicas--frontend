@@ -28,6 +28,7 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [patientSearch, setPatientSearch] = useState('');
     const [isPatientListOpen, setIsPatientListOpen] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState<Patient | undefined>(undefined);
 
     const defaultDate = dateParam ? `${dateParam}T09:00` : format(new Date(), "yyyy-MM-dd'T'09:00");
     const defaultEndDate = dateParam ? `${dateParam}T09:30` : format(new Date(), "yyyy-MM-dd'T'09:30");
@@ -50,7 +51,7 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
         const loadData = async () => {
             try {
                 const [patientsRes, doctorsRes, roomsRes] = await Promise.all([
-                    patientsApi.getAll({ page: 1, limit: 100 }),
+                    patientsApi.getAll({ page: 1, limit: 50 }),
                     doctorsApi.getAll(),
                     consultingRoomsApi.getAll()
                 ]);
@@ -72,6 +73,15 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
                         reason: app.reason || '',
                         notes: app.notes || '',
                     });
+                    setSelectedPatient(app.patient);
+                } else if (patientIdParam) {
+                    try {
+                        const patRes = await patientsApi.getById(patientIdParam);
+                        const pat = (patRes.data as any).data || patRes.data;
+                        setSelectedPatient(pat);
+                    } catch (e) {
+                        console.error('Error loading patient param:', e);
+                    }
                 } else if ((user?.organizationRole || user?.systemRole) === 'DOCTOR') {
                     const currentDoctor = doctorsRes.data.data.find((d: Doctor) => d.user?.id === user?.id);
                     if (currentDoctor) {
@@ -87,17 +97,30 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
         };
 
         loadData();
-    }, [id, isEdit, form, user]);
+    }, [id, isEdit, form, user, patientIdParam]);
 
-    const filteredPatients = useMemo(() => {
-        if (!patientSearch) return patients;
-        const search = patientSearch.toLowerCase();
-        return patients.filter(p =>
-            p.firstName.toLowerCase().includes(search) ||
-            p.lastName.toLowerCase().includes(search) ||
-            p.identificationNumber?.includes(search)
-        );
-    }, [patients, patientSearch]);
+    // Fetch patients dynamically as user searches
+    useEffect(() => {
+        const fetchPatients = async () => {
+            try {
+                const res = await patientsApi.getAll({ 
+                    page: 1, 
+                    limit: 50, 
+                    search: patientSearch || undefined 
+                } as any);
+                setPatients(res.data.data);
+            } catch (error) {
+                console.error('Error fetching patients for search:', error);
+            }
+        };
+
+        if (isPatientListOpen) {
+            const delayDebounceFn = setTimeout(() => {
+                fetchPatients();
+            }, 300);
+            return () => clearTimeout(delayDebounceFn);
+        }
+    }, [patientSearch, isPatientListOpen]);
 
     const onSubmit = async (values: AppointmentFormValues) => {
         setIsSubmitting(true);
@@ -116,7 +139,6 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
                 toast.success('Cita programada con éxito');
             }
 
-            // Invalida caché para actualización en vivo
             queryClient.invalidateQueries({ queryKey: ['appointments'] });
             if (isEdit) {
                 queryClient.invalidateQueries({ queryKey: ['appointment', id] });
@@ -130,8 +152,6 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
         }
     };
 
-    const selectedPatient = patients.find(p => p.id === form.watch('patientId'));
-
     return {
         form,
         patients,
@@ -142,11 +162,13 @@ export function useAppointmentForm(id?: string, dateParam?: string | null, patie
         isEdit,
         patientSearch,
         setPatientSearch,
-        filteredPatients,
+        filteredPatients: patients,
         selectedPatient,
+        setSelectedPatient,
         isPatientListOpen,
         setIsPatientListOpen,
         onSubmit,
         user,
     };
 }
+

@@ -37,7 +37,7 @@ export function Header() {
         : 'U';
 
     return (
-        <header className="flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-8 sticky top-0 z-10">
+        <header className="flex min-h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] items-center gap-3 sm:gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-8 shrink-0 z-10">
             {/* Mobile sidebar toggle */}
             <Button
                 variant="ghost"

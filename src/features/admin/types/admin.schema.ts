@@ -8,6 +8,7 @@ export const userSchema = z.object({
     password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
     systemRole: z.nativeEnum(SystemRole, { message: 'Seleccione un rol' }).default(SystemRole.USER),
     organizationRole: z.nativeEnum(OrganizationRole).optional(),
+    username: z.string().min(3, 'El usuario debe tener al menos 3 caracteres').optional().or(z.literal('')),
     specialty: z.string().optional().or(z.literal('')),
 });
 

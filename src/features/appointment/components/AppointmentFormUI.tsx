@@ -1,7 +1,8 @@
 import type { UseFormReturn } from 'react-hook-form';
-import { Loader2, Save, Search, Check, Clock, Calendar } from 'lucide-react';
+import { Loader2, Save, Search, Check, Clock, Calendar, ChevronsUpDown, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     Form,
     FormControl,
@@ -23,7 +24,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Status } from '@/types/enums';
 import type { Patient, Doctor, ConsultingRoom } from '@/types';
 import type { AppointmentFormValues } from '@/features/appointment/hooks/useAppointmentForm';
-import { cn } from '@/lib/utils';
+import { cn, formatPatientAge } from '@/lib/utils';
+import { PatientSelector } from '@/components/shared/PatientSelector';
 
 const TIME_OPTIONS = Array.from({ length: 24 * 4 }, (_, i) => {
     const totalMinutes = i * 15;
@@ -49,6 +51,7 @@ interface AppointmentFormUIProps {
     setPatientSearch: (val: string) => void;
     filteredPatients: Patient[];
     selectedPatient?: Patient;
+    setSelectedPatient: (patient: Patient) => void;
     isPatientListOpen: boolean;
     setIsPatientListOpen: (val: boolean) => void;
     onSubmit: (values: AppointmentFormValues) => void;
@@ -65,6 +68,7 @@ export function AppointmentFormUI({
     setPatientSearch,
     filteredPatients,
     selectedPatient,
+    setSelectedPatient,
     isPatientListOpen,
     setIsPatientListOpen,
     onSubmit,
@@ -81,65 +85,16 @@ export function AppointmentFormUI({
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
                             <FormLabel>Paciente *</FormLabel>
-                            <Popover open={isPatientListOpen} onOpenChange={setIsPatientListOpen}>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            className={cn(
-                                                "w-full justify-between",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                        >
-                                            {selectedPatient
-                                                ? `${selectedPatient.firstName} ${selectedPatient.lastName}`
-                                                : "Seleccione un paciente..."}
-                                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[400px] p-0" align="start">
-                                    <div className="p-2 border-b">
-                                        <Input
-                                            placeholder="Buscar por nombre o documento..."
-                                            value={patientSearch}
-                                            onChange={(e) => setPatientSearch(e.target.value)}
-                                            className="h-9"
-                                        />
-                                    </div>
-                                    <div className="max-h-[300px] overflow-y-auto">
-                                        {filteredPatients.length === 0 ? (
-                                            <div className="p-4 text-sm text-center text-muted-foreground">
-                                                No se encontraron pacientes.
-                                            </div>
-                                        ) : (
-                                            <div className="p-1">
-                                                {filteredPatients.map((patient) => (
-                                                    <button
-                                                        key={patient.id}
-                                                        type="button"
-                                                        className={cn(
-                                                            "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                                                            field.value === patient.id && "bg-accent text-accent-foreground"
-                                                        )}
-                                                        onClick={() => {
-                                                            form.setValue("patientId", patient.id);
-                                                            setIsPatientListOpen(false);
-                                                        }}
-                                                    >
-                                                        <div className="flex flex-col items-start">
-                                                            <span>{patient.firstName} {patient.lastName}</span>
-                                                            <span className="text-xs text-muted-foreground">{patient.identificationNumber}</span>
-                                                        </div>
-                                                        {field.value === patient.id && <Check className="h-4 w-4" />}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
+                            <FormControl>
+                                <PatientSelector
+                                    value={field.value}
+                                    selectedPatient={selectedPatient}
+                                    onChange={(patientId, patient) => {
+                                        field.onChange(patientId);
+                                        if (patient) setSelectedPatient(patient);
+                                    }}
+                                />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}

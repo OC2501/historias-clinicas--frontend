@@ -15,6 +15,9 @@ export const usersApi = {
     getById: (id: string) =>
         api.get<ApiOneResponse<User>>(`/users/${id}`),
 
+    getNurses: () =>
+        api.get<User[]>('/users/nurses'),
+
     create: (data: CreateUserRequest) =>
         api.post<ApiOneResponse<User>>('/users', data),
 

@@ -73,19 +73,19 @@ export function ResetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans overflow-hidden">
-            <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-24 py-10 bg-white animate-in fade-in slide-in-from-left-4 duration-700">
-                <div className="max-w-md w-full mx-auto space-y-8">
+        <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-background font-sans overflow-y-auto lg:overflow-hidden">
+            <div className="flex-1 flex flex-col justify-start lg:justify-center px-4 sm:px-12 lg:px-20 xl:px-24 py-6 sm:py-10 bg-white overflow-y-auto min-h-0 animate-in fade-in slide-in-from-left-4 duration-700">
+                <div className="max-w-md w-full mx-auto space-y-6 sm:space-y-8 my-auto">
                     <div className="space-y-3">
-                        <div className="flex items-center gap-3 mb-6">
+                        <div className="flex items-center gap-3 mb-4 sm:mb-6">
                             <div className="bg-primary/10 p-2 rounded-xl">
                                 <Stethoscope className="h-6 w-6 text-primary" />
                             </div>
-                            <span className="text-xl font-black tracking-tight text-primary">
-                                MC Portal Clínico
+                            <span className="text-lg sm:text-xl font-black tracking-tight text-primary">
+                                Portal Clínico Hidroven-Falcón
                             </span>
                         </div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-primary">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-primary">
                             Nueva Contraseña
                         </h1>
                         <p className="text-muted-foreground text-base">
@@ -170,7 +170,7 @@ export function ResetPasswordPage() {
                 </div>
             </div>
 
-            <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-primary">
+            <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-primary shrink-0">
                 <div className="absolute inset-0 z-0">
                     <img
                         src="/img/medical_login.png"

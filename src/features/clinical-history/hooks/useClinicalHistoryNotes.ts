@@ -2,11 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clinicalHistoryNoteApi } from '@/api';
 import type { CreateClinicalHistoryNoteRequest, UpdateClinicalHistoryNoteRequest } from '@/types';
 
-export const useClinicalHistoryNotes = (page = 1, limit = 10, clinicalHistoryId?: string) => {
+export const useClinicalHistoryNotes = (page = 1, limit = 10, search?: string, gender?: string, gerencia?: string, clinicalHistoryId?: string) => {
     return useQuery({
-        queryKey: ['clinical-history-notes', page, limit, clinicalHistoryId],
+        queryKey: ['clinical-history-notes', page, limit, search, gender, gerencia, clinicalHistoryId],
         queryFn: async () => {
-            const res = await clinicalHistoryNoteApi.getAll({ page, limit, clinicalHistoryId } as any);
+            const res = await clinicalHistoryNoteApi.getAll({ 
+                page, 
+                limit, 
+                search: search || undefined,
+                gender: gender || undefined,
+                gerencia: gerencia || undefined,
+                clinicalHistoryId 
+            } as any);
             return res.data;
         },
     });

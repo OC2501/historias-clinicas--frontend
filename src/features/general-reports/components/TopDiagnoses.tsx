@@ -71,29 +71,33 @@ export function TopDiagnoses({ data = [] }: TopDiagnosesProps) {
             layout="vertical"
             barCategoryGap="20%"
             margin={{
-              left: 0,
-              right: 20,
+              left: 10,
+              right: 25,
               top: 10,
               bottom: 10
             }}
           >
             <CartesianGrid horizontal={false} opacity={0.1} strokeDasharray="3 3" />
-            <XAxis type="number" hide />
+            <XAxis
+              type="number"
+              hide
+              domain={[0, (dataMax: number) => Math.max(dataMax + 1, 3)]}
+            />
             <YAxis
               dataKey="name"
               type="category"
               tickLine={false}
               axisLine={false}
               tickMargin={10}
-              fontSize={10}
-              width={120}
-              tickFormatter={(value: string) => value.length > 20 ? value.substring(0, 20) + "..." : value}
+              fontSize={11}
+              width={175}
+              tickFormatter={(value: string) => value.length > 26 ? value.substring(0, 26) + "..." : value}
             />
             <Tooltip content={<CustomPercentTooltip total={total} />} cursor={{ fill: "var(--muted)", opacity: 0.4 }} />
             <Bar
               dataKey="count"
               radius={[4, 4, 4, 4]}
-              maxBarSize={40}
+              maxBarSize={32}
             />
           </BarChart>
         </ChartContainer>}

@@ -57,14 +57,20 @@ const mainNavItems: NavItem[] = [
         to: '/clinical-history',
         label: 'Historias Clínicas',
         icon: <FileText className="h-4 w-4" />,
-        roles: [OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, SystemRole.SUPERADMIN],
+        roles: [OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, OrganizationRole.SECRETARY, SystemRole.SUPERADMIN],
     },
 
     {
         to: '/clinical-history-note',
         label: 'Notas de Evolución',
         icon: <History className="h-4 w-4" />,
-        roles: [OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, SystemRole.SUPERADMIN],
+        roles: [OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, OrganizationRole.SECRETARY, SystemRole.SUPERADMIN],
+    },
+    {
+        to: '/consultas',
+        label: 'Chequeos Diarios',
+        icon: <Stethoscope className="h-4 w-4" />,
+        roles: [OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, OrganizationRole.SECRETARY, SystemRole.SUPERADMIN],
     }
 ];
 
@@ -78,25 +84,25 @@ const settingsNavItems: NavItem[] = [
         to: '/settings/reports',
         label: 'Reportes',
         icon: <FileBarChart className="h-4 w-4" />,
-        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.DOCTOR],
+        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.DOCTOR, OrganizationRole.NURSE],
     },
     {
         to: '/settings/schedule',
         label: 'Horarios',
         icon: <Clock className="h-4 w-4" />,
-        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN],
+        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN],
     },
     {
         to: '/settings/rooms',
         label: 'Consultorios',
         icon: <DoorOpen className="h-4 w-4" />,
-        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN],
+        roles: [OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN],
     },
     {
         to: '/settings/templates',
         label: 'Plantillas',
         icon: <BookTemplate className="h-4 w-4" />,
-        roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER, OrganizationRole.DOCTOR],
+        roles: [OrganizationRole.ADMIN, SystemRole.SUPERADMIN, OrganizationRole.OWNER, OrganizationRole.DOCTOR, OrganizationRole.NURSE],
     },
     {
         to: '/settings/users',
@@ -133,7 +139,10 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
 
     const canAccess = (item: NavItem) => {
         if (!item.roles) return true;
-        return user && item.roles.includes((user.organizationRole || user.systemRole));
+        return user && (
+            item.roles.includes(user.systemRole) ||
+            (user.organizationRole && item.roles.includes(user.organizationRole))
+        );
     };
 
     const hasSettingsAccess = settingsNavItems.some(canAccess);
@@ -145,18 +154,26 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
             isMobile && "w-full border-none shadow-none"
         )}>
             {/* Logo Area */}
-            <div className="flex h-16 items-center border-b px-4 overflow-hidden shrink-0">
+            <div className="flex items-center px-4 py-5 overflow-hidden shrink-0 border-b border-slate-100 dark:border-slate-800">
                 <div className={cn(
                     "flex items-center gap-3 transition-all duration-300",
                     !effectiveIsOpen && "mx-auto justify-center"
                 )}>
-                    <div className="bg-primary/10 p-2 rounded-xl shrink-0">
-                        <Stethoscope className="h-6 w-6 text-primary" />
+                    <div className="bg-[#1a5f9c] text-white p-2.5 rounded-2xl shrink-0 shadow-md shadow-[#1a5f9c]/20 flex items-center justify-center">
+                        <Stethoscope className="h-6 w-6 text-white" />
                     </div>
                     {effectiveIsOpen && (
-                        <span className="text-xl font-black tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent truncate animate-in fade-in slide-in-from-left-2">
-                            MC Portal Clínico
-                        </span>
+                        <div className="flex flex-col justify-center leading-tight animate-in fade-in slide-in-from-left-2 duration-300">
+                            <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-0.5">
+                                Portal Clínico
+                            </span>
+                            <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-none mb-1">
+                                de Historias
+                            </span>
+                            <span className="text-[10px] font-extrabold text-[#1a5f9c] dark:text-[#3b82f6] tracking-widest uppercase">
+                                HIDROVEN-FALCÓN
+                            </span>
+                        </div>
                     )}
                 </div>
             </div>
@@ -164,23 +181,23 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
             {/* Toggle Button - Refined and Integrated - Hidden in mobile */}
             {!isMobile && (
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
                     onClick={toggleSidebar}
-                    className="absolute -right-3 top-20 z-30 h-6 w-6 rounded-full border bg-background shadow-md hover:bg-muted text-muted-foreground hover:text-primary transition-all lg:flex hidden"
+                    className="absolute -right-3.5 top-6 z-50 h-7 w-7 rounded-full border border-border bg-background shadow-md hover:bg-muted text-muted-foreground hover:text-primary transition-all lg:flex hidden items-center justify-center cursor-pointer"
                     aria-label={effectiveIsOpen ? "Contraer sidebar" : "Expandir sidebar"}
                 >
                     {effectiveIsOpen ? (
-                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <ChevronLeft className="h-4 w-4" />
                     ) : (
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        <ChevronRight className="h-4 w-4" />
                     )}
                 </Button>
             )}
 
             <ScrollArea className="flex-1 min-h-0 px-3 py-6">
                 {/* Main Navigation */}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                     {mainNavItems.filter(canAccess).map((item) => (
                         <NavLink
                             key={item.to}
@@ -188,27 +205,31 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                             onClick={onNavigate}
                             title={!effectiveIsOpen ? item.label : ''}
                             className={({ isActive: linkActive }) => cn(
-                                'flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 group relative',
+                                'flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-200 group relative',
                                 linkActive
-                                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    ? 'bg-[#1a5f9c] text-white shadow-lg shadow-[#1a5f9c]/25'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100',
                                 !effectiveIsOpen && "px-0 justify-center"
                             )}
                         >
-                            <div className={cn(
-                                "transition-transform duration-200 group-hover:scale-110",
-                                isActive(item.to) ? "text-primary-foreground" : "text-primary"
-                            )}>
-                                {item.icon}
+                            <div className="flex items-center gap-3.5 min-w-0">
+                                <div className={cn(
+                                    "transition-transform duration-200 group-hover:scale-110 shrink-0",
+                                    isActive(item.to) ? "text-white" : "text-slate-500 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-200"
+                                )}>
+                                    {item.icon}
+                                </div>
+                                {effectiveIsOpen && (
+                                    <span className="animate-in fade-in slide-in-from-left-2 duration-300 truncate">
+                                        {item.label}
+                                    </span>
+                                )}
                             </div>
-                            {effectiveIsOpen && (
-                                <span className="animate-in fade-in slide-in-from-left-2 duration-300 truncate">
-                                    {item.label}
-                                </span>
+                            {effectiveIsOpen && isActive(item.to) && (
+                                <div className="h-1.5 w-1.5 rounded-full bg-white shrink-0 shadow-sm" />
                             )}
-                            {/* Active Indicator Line for Collapsed State */}
                             {!effectiveIsOpen && isActive(item.to) && (
-                                <div className="absolute left-0 h-6 w-1 bg-primary rounded-r-full" />
+                                <div className="absolute left-0 h-6 w-1 bg-[#1a5f9c] rounded-r-full" />
                             )}
                         </NavLink>
                     ))}
@@ -216,14 +237,14 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
 
                 {hasSettingsAccess && (
                     <>
-                        <Separator className="my-6 opacity-50" />
+                        <Separator className="my-6 opacity-40" />
                         {effectiveIsOpen && (
-                            <div className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 flex items-center gap-2 animate-in fade-in duration-300">
-                                <Settings className="h-3 w-3" />
+                            <div className="mb-3 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2 animate-in fade-in duration-300">
+                                <Settings className="h-3 w-3 text-slate-400" />
                                 Configuración
                             </div>
                         )}
-                        <nav className="flex flex-col gap-1">
+                        <nav className="flex flex-col gap-1.5">
                             {settingsNavItems.filter(canAccess).map((item) => (
                                 <NavLink
                                     key={item.to}
@@ -231,26 +252,31 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                                     onClick={onNavigate}
                                     title={!effectiveIsOpen ? item.label : ''}
                                     className={({ isActive: linkActive }) => cn(
-                                        'flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 group relative',
+                                        'flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-all duration-200 group relative',
                                         linkActive
-                                            ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                            ? 'bg-[#1a5f9c] text-white shadow-lg shadow-[#1a5f9c]/25'
+                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100',
                                         !effectiveIsOpen && "px-0 justify-center"
                                     )}
                                 >
-                                    <div className={cn(
-                                        "transition-transform duration-200 group-hover:scale-110",
-                                        isActive(item.to) ? "text-primary-foreground" : "text-primary"
-                                    )}>
-                                        {item.icon}
+                                    <div className="flex items-center gap-3.5 min-w-0">
+                                        <div className={cn(
+                                            "transition-transform duration-200 group-hover:scale-110 shrink-0",
+                                            isActive(item.to) ? "text-white" : "text-slate-500 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-200"
+                                        )}>
+                                            {item.icon}
+                                        </div>
+                                        {effectiveIsOpen && (
+                                            <span className="animate-in fade-in slide-in-from-left-2 duration-300 truncate">
+                                                {item.label}
+                                            </span>
+                                        )}
                                     </div>
-                                    {effectiveIsOpen && (
-                                        <span className="animate-in fade-in slide-in-from-left-2 duration-300 truncate">
-                                            {item.label}
-                                        </span>
+                                    {effectiveIsOpen && isActive(item.to) && (
+                                        <div className="h-1.5 w-1.5 rounded-full bg-white shrink-0 shadow-sm" />
                                     )}
                                     {!effectiveIsOpen && isActive(item.to) && (
-                                        <div className="absolute left-0 h-6 w-1 bg-primary rounded-r-full" />
+                                        <div className="absolute left-0 h-6 w-1 bg-[#1a5f9c] rounded-r-full" />
                                     )}
                                 </NavLink>
                             ))}
@@ -259,20 +285,20 @@ export function Sidebar({ onNavigate, isMobile }: SidebarProps) {
                 )}
             </ScrollArea>
 
-            <div className="p-4 border-t bg-muted/5 shrink-0">
+            <div className="p-4 border-t dark:border-slate-850 bg-muted/5 shrink-0">
                 <div className={cn(
-                    "bg-primary/5 rounded-2xl p-4 border border-primary/10 transition-all duration-300 overflow-hidden",
+                    "bg-primary/5 dark:bg-primary/10 rounded-2xl p-4 border border-primary/10 transition-all duration-300 overflow-hidden",
                     !effectiveIsOpen && "p-2 items-center"
                 )}>
                     {effectiveIsOpen ? (
                         <div className="animate-in fade-in duration-300">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Usuario Actual</p>
-                            <p className="text-sm font-bold truncate">{user?.name}</p>
-                            <p className="text-[10px] text-muted-foreground font-medium">{(user?.organizationRole || user?.systemRole)}</p>
+                            <p className="text-[10px] font-bold text-primary dark:text-[#3b82f6] uppercase tracking-wider mb-1">Usuario Actual</p>
+                            <p className="text-sm font-bold truncate dark:text-slate-200">{user?.name}</p>
+                            <p className="text-[10px] text-muted-foreground dark:text-slate-400 font-medium">{(user?.organizationRole || user?.systemRole)}</p>
                         </div>
                     ) : (
                         <div className="flex justify-center py-1">
-                            <UserCog className="h-5 w-5 text-primary" />
+                            <UserCog className="h-5 w-5 text-primary dark:text-[#3b82f6]" />
                         </div>
                     )}
                 </div>

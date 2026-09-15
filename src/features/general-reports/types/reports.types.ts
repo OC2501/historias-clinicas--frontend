@@ -1,13 +1,32 @@
 export interface DashboardSummary {
   totalPatients: number;
+  titularesCount?: number;
+  beneficiariosCount?: number;
   totalConsultations: number;
+  totalConsultasDirectas?: number;
+  totalNotes?: number;
+  totalHistories?: number;
+  totalReposos?: number;
+  totalDiasReposo?: number;
+  repososActivosHoy?: number;
+  repososCulminados?: number;
   activeDoctors: number;
+  totalAppointments?: number;
   dischargeRate: number;
 }
 
 export interface SpecialtyDistribution {
   specialty: string;
   count: string | number;
+}
+
+export interface GerenciaDistribution {
+  gerencia: string;
+  totalConsultas: number;
+  totalReposos: number;
+  repososActivos?: number;
+  repososCulminados?: number;
+  totalDiasReposo: number;
 }
 
 export interface PatientDemographics {
@@ -22,6 +41,11 @@ export interface PatientDemographics {
     '19-60': number;
     '60+': number;
   };
+  patientType?: {
+    titulares: number;
+    beneficiarios: number;
+  };
+  total?: number;
 }
 
 export interface ConsultationTrend {
@@ -32,6 +56,9 @@ export interface ConsultationTrend {
 export interface TopDiagnosis {
   name: string;
   count: number;
+  repososCount?: number;
+  totalDiasReposo?: number;
+  category?: string;
 }
 
 export interface AppointmentStats {

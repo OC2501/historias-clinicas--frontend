@@ -1,4 +1,4 @@
-import type { Patient } from '@/features/patient/types/patient.types';
+import type { Patient, PatientDocument } from '@/features/patient/types/patient.types';
 import type { Doctor } from '@/features/admin/types/doctor.types';
 import type { ClinicalHistoryNote } from '@/features/clinical-history/types/clinical-history-note.types';
 
@@ -14,6 +14,7 @@ export interface FormData {
     planManejo?: Record<string, any>;
     datosEspecificos?: Record<string, any>;
     examenFisico?: Record<string, any>;
+    documents?: PatientDocument[];
 }
 
 export interface ClinicalHistory {
@@ -30,6 +31,7 @@ export interface ClinicalHistory {
     datosEspecificos?: Record<string, any>;
     diagnosticos?: string[];
     planManejo?: any;
+    documents?: PatientDocument[];
     patient: Patient;
     doctor: Doctor;
     notes?: ClinicalHistoryNote[];
@@ -43,7 +45,9 @@ export interface CreateClinicalHistoryRequest {
     patientId: string;
     doctorId: string;
     specialty: string;    // 'NEUMONOLOGIA', 'CARDIOLOGIA', etc.
+    templateId?: string;
     formData?: FormData;
+    documents?: PatientDocument[];
 }
 
 export type UpdateClinicalHistoryRequest = Partial<CreateClinicalHistoryRequest>;

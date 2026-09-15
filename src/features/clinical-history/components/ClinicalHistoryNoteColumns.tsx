@@ -1,6 +1,6 @@
-import { format } from 'date-fns';
-import { Eye, MoreHorizontal, Printer } from 'lucide-react';
+import { Eye, MoreHorizontal, Printer, Pencil } from 'lucide-react';
 import type { ClinicalHistoryNote } from '@/types';
+import { safeFormat } from '@/lib/utils';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,7 +22,7 @@ export const getClinicalHistoryNoteColumns = (
 ): Column<ClinicalHistoryNote>[] => [
     {
         header: 'Fecha',
-        accessorKey: (note) => note?.fecha ? format(new Date(note.fecha), 'dd/MM/yyyy hh:mm b') : 'S/F',
+        accessorKey: (note) => safeFormat(note?.fecha, 'dd/MM/yyyy hh:mm a', 'S/F'),
     },
     {
         header: 'Paciente',
@@ -44,7 +44,7 @@ export const getClinicalHistoryNoteColumns = (
         header: 'Próxima Cita',
         accessorKey: (note) => {
             if (note?.proximaCita) {
-                return format(new Date(note.proximaCita), 'dd/MM/yyyy');
+                return safeFormat(note.proximaCita, 'dd/MM/yyyy');
             }
             if (note?.isDischarge) {
                 return <PatientStatusBadge status="DISCHARGED" className="scale-90 origin-left" />;
@@ -69,6 +69,13 @@ export const getClinicalHistoryNoteColumns = (
                     }}>
                         <Eye className="mr-2 h-4 w-4" />
                         Ver Nota
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/clinical-history-note/${note.id}/edit`);
+                    }}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar Nota
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={(e) => {
                         e.stopPropagation();

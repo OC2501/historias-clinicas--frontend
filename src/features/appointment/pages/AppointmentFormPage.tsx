@@ -22,6 +22,7 @@ export function AppointmentFormPage() {
         setIsPatientListOpen,
         filteredPatients,
         selectedPatient,
+        setSelectedPatient,
         onSubmit,
         user
     } = useAppointmentForm();
@@ -63,6 +64,7 @@ export function AppointmentFormPage() {
                         isPatientListOpen={isPatientListOpen}
                         setIsPatientListOpen={setIsPatientListOpen}
                         selectedPatient={selectedPatient}
+                        setSelectedPatient={setSelectedPatient}
                         onSubmit={onSubmit}
                         userRole={(user?.organizationRole || user?.systemRole)}
                     />

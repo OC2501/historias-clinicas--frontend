@@ -12,7 +12,8 @@ import {
     Award,
     ShieldAlert,
     Stethoscope,
-    CheckCircle2
+    CheckCircle2,
+    LayoutDashboard
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi, appointmentsApi, doctorsApi } from '@/api';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { SystemRole, OrganizationRole } from '@/types/enums';
 import type { Appointment } from '@/types';
 import { Link, useNavigate } from 'react-router';
 import { format, isToday } from 'date-fns';
@@ -48,6 +50,14 @@ export function DashboardPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
+    const canManageUsers = Boolean(
+        user && (
+            user.systemRole === SystemRole.SUPERADMIN ||
+            user.organizationRole === OrganizationRole.ADMIN ||
+            user.organizationRole === OrganizationRole.OWNER
+        )
+    );
+
     const { data: dashboardRes, isLoading: isLoadingDashboard } = useQuery({
         queryKey: ['doctor-dashboard'],
         queryFn: () => dashboardApi.getDoctorDashboard(),
@@ -56,6 +66,8 @@ export function DashboardPage() {
             user?.organizationRole === 'ADMIN' || 
             user?.organizationRole === 'OWNER' || 
             user?.organizationRole === 'MEDICAL_DIRECTOR' ||
+            user?.organizationRole === 'NURSE' ||
+            user?.organizationRole === 'SECRETARY' ||
             (user?.organizationRole === 'DOCTOR' && !!user?.doctorProfile),
     });
 
@@ -76,7 +88,12 @@ export function DashboardPage() {
         },
         enabled: !!user,
     });
-    const doctors = doctorsRes?.data || [];
+    const doctors = useMemo(() => {
+        if (Array.isArray(doctorsRes)) return doctorsRes;
+        if (Array.isArray((doctorsRes as any)?.data)) return (doctorsRes as any).data;
+        if (Array.isArray((doctorsRes as any)?.data?.data)) return (doctorsRes as any).data.data;
+        return [];
+    }, [doctorsRes]);
 
     const { data: recentHistoriesRes, isLoading: isLoadingRecent } = useQuery({
         queryKey: ['recent-clinical-histories'],
@@ -158,8 +175,11 @@ export function DashboardPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-muted-foreground">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+                        <LayoutDashboard className="w-8 h-8 text-primary" />
+                        Dashboard
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Bienvenido, <span className="text-foreground font-medium">{user?.name}</span>. Aquí tienes un resumen de hoy.
                     </p>
                 </div>
@@ -168,7 +188,7 @@ export function DashboardPage() {
             {/* Onboarding / Missing Profile Alert */}
             {user?.organizationRole === 'DOCTOR' && 
             (!user?.doctorProfile?.specialty || !user?.doctorProfile?.licenseNumber) && (
-                <Card className="border-none shadow-lg bg-[#262C3A] text-white overflow-hidden mb-6">
+                <Card className="border-none shadow-lg bg-gradient-to-r from-primary via-[#165287] to-[#0f406d] text-white overflow-hidden mb-6">
                     <CardContent className="p-0">
                         <div className="flex flex-col md:flex-row items-center">
                             <div className="p-8 flex-1 space-y-4">
@@ -182,7 +202,7 @@ export function DashboardPage() {
                                 </p>
                                 <Button
                                     size="lg"
-                                    className="bg-white text-[#262C3A] hover:bg-white/90 font-bold h-12 px-8 rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95"
+                                    className="bg-white text-primary hover:bg-white/90 font-bold h-12 px-8 rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95"
                                     onClick={() => navigate('/doctor/setup')}
                                 >
                                     <Award className="mr-2 h-5 w-5" />
@@ -190,7 +210,7 @@ export function DashboardPage() {
                                 </Button>
                             </div>
                             <div className="hidden md:flex relative p-8">
-                                <div className="absolute inset-0 bg-gradient-to-l from-[#262C3A]/50 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent" />
                                 <Stethoscope className="h-48 w-48 text-white/10 -rotate-12" />
                             </div>
                         </div>
@@ -431,6 +451,15 @@ export function DashboardPage() {
                             </Link>
                         </Button>
 
+                        <Button variant="outline" className="w-full justify-start h-12 text-base font-medium shadow-sm" asChild>
+                            <Link to="/consultas">
+                                <div className="bg-muted p-1.5 rounded-lg mr-3">
+                                    <Stethoscope className="h-4 w-4 text-primary" />
+                                </div>
+                                Chequeos Diarios y Consultas
+                            </Link>
+                        </Button>
+
                         <div className="relative my-4">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t" />
@@ -442,19 +471,21 @@ export function DashboardPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className={cn("grid gap-3", canManageUsers ? "grid-cols-2" : "grid-cols-1")}>
                             <Button variant="ghost" className="flex flex-col h-20 gap-2 border bg-muted/10 hover:bg-muted/30 transition-all" asChild>
                                 <Link to="/settings/schedule">
                                     <Clock className="h-5 w-5 text-primary" />
                                     <span className="text-xs font-semibold">Horarios</span>
                                 </Link>
                             </Button>
-                            <Button variant="ghost" className="flex flex-col h-20 gap-2 border bg-muted/10 hover:bg-muted/30 transition-all" asChild>
-                                <Link to="/settings/users">
-                                    <Settings className="h-5 w-5 text-primary" />
-                                    <span className="text-xs font-semibold">Usuarios</span>
-                                </Link>
-                            </Button>
+                            {canManageUsers && (
+                                <Button variant="ghost" className="flex flex-col h-20 gap-2 border bg-muted/10 hover:bg-muted/30 transition-all" asChild>
+                                    <Link to="/settings/users">
+                                        <Settings className="h-5 w-5 text-primary" />
+                                        <span className="text-xs font-semibold">Usuarios</span>
+                                    </Link>
+                                </Button>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

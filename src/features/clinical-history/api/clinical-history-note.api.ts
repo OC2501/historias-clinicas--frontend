@@ -23,4 +23,7 @@ export const clinicalHistoryNoteApi = {
 
     delete: (id: string) =>
         api.delete<ApiOneResponse<ClinicalHistoryNote>>(`clinical-history-note/${id}`),
+
+    updateDocuments: (id: string, documents: any[]) =>
+        api.patch<ApiOneResponse<ClinicalHistoryNote>>(`clinical-history-note/${id}/documents`, { documents }),
 };

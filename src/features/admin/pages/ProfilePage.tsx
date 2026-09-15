@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Save, Loader2, User, Building2, ShieldCheck, Mail, Briefcase, Award, FileCheck } from 'lucide-react';
+import { Save, Loader2, User, Building2, ShieldCheck, Mail, Briefcase, Award, FileCheck, HelpCircle } from 'lucide-react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -22,12 +29,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { usersApi, organizationsApi, doctorsApi } from '@/api';
-import { OrganizationPlanType, OrganizationRole } from '@/types';
+import { OrganizationPlanType, OrganizationRole, SystemRole } from '@/types';
 
 // Esquemas de validación
 const accountSchema = z.object({
     name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
     email: z.string().email('Correo electrónico inválido'),
+    username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres').optional().or(z.literal('')),
 });
 
 const organizationSchema = z.object({
@@ -50,10 +58,30 @@ const securitySchema = z.object({
     path: ["confirmPassword"],
 });
 
+const securityQuestionsList = [
+    "¿Cuál es el nombre de tu primera mascota?",
+    "¿Cuál fue el nombre de tu primera escuela?",
+    "¿En qué ciudad nació tu madre?",
+    "¿Cuál es tu comida favorita?",
+    "¿Cuál es el nombre de tu mejor amigo de la infancia?",
+    "¿Cuál fue el modelo de tu primer auto?",
+];
+
+const securityQuestionsSchema = z.object({
+    question1: z.string().min(1, 'Debe seleccionar una pregunta'),
+    answer1: z.string().min(2, 'La respuesta debe tener al menos 2 caracteres'),
+    question2: z.string().min(1, 'Debe seleccionar una pregunta'),
+    answer2: z.string().min(2, 'La respuesta debe tener al menos 2 caracteres'),
+}).refine((data) => data.question1 !== data.question2, {
+    message: "Debe seleccionar dos preguntas diferentes",
+    path: ["question2"],
+});
+
 type AccountValues = z.infer<typeof accountSchema>;
 type OrganizationValues = z.infer<typeof organizationSchema>;
 type ProfessionalValues = z.infer<typeof professionalSchema>;
 type SecurityValues = z.infer<typeof securitySchema>;
+type SecurityQuestionsValues = z.infer<typeof securityQuestionsSchema>;
 
 export default function ProfilePage() {
     const { user, updateUser } = useAuth();
@@ -61,12 +89,14 @@ export default function ProfilePage() {
     const [isSubmittingOrg, setIsSubmittingOrg] = useState(false);
     const [isSubmittingProfessional, setIsSubmittingProfessional] = useState(false);
     const [isSubmittingSecurity, setIsSubmittingSecurity] = useState(false);
+    const [isSubmittingQuestions, setIsSubmittingQuestions] = useState(false);
 
     const accountForm = useForm<AccountValues>({
         resolver: zodResolver(accountSchema),
         defaultValues: {
             name: user?.name || '',
             email: user?.email || '',
+            username: user?.username || '',
         },
     });
 
@@ -96,12 +126,23 @@ export default function ProfilePage() {
         },
     });
 
+    const securityQuestionsForm = useForm<SecurityQuestionsValues>({
+        resolver: zodResolver(securityQuestionsSchema),
+        defaultValues: {
+            question1: user?.securityQuestion1 || '',
+            answer1: '',
+            question2: user?.securityQuestion2 || '',
+            answer2: '',
+        },
+    });
+
     // Actualizar valores por defecto cuando el usuario cargue
     useEffect(() => {
         if (user) {
             accountForm.reset({
                 name: user.name,
                 email: user.email,
+                username: user.username || '',
             });
             if (user.organization) {
                 orgForm.reset({
@@ -113,12 +154,18 @@ export default function ProfilePage() {
             }
             if (user.doctorProfile) {
                 profForm.reset({
-                    specialty: user.doctorProfile.specialty || '',
-                    licenseNumber: user.doctorProfile.licenseNumber || '',
+                    specialty: user.doctorProfile.specialty,
+                    licenseNumber: user.doctorProfile.licenseNumber,
                 });
             }
+            securityQuestionsForm.reset({
+                question1: user.securityQuestion1 || '',
+                answer1: '',
+                question2: user.securityQuestion2 || '',
+                answer2: '',
+            });
         }
-    }, [user, accountForm, orgForm, profForm]);
+    }, [user, accountForm, orgForm, profForm, securityQuestionsForm]);
 
     const onAccountSubmit = async (values: AccountValues) => {
         if (!user) return;
@@ -194,15 +241,42 @@ export default function ProfilePage() {
         }
     };
 
+    const onQuestionsSubmit = async (values: SecurityQuestionsValues) => {
+        if (!user) return;
+        setIsSubmittingQuestions(true);
+        try {
+            const response = await usersApi.update(user.id, {
+                securityQuestion1: values.question1,
+                securityAnswer1: values.answer1,
+                securityQuestion2: values.question2,
+                securityAnswer2: values.answer2,
+            });
+            updateUser(response.data);
+            toast.success('Preguntas de seguridad actualizadas con éxito');
+            securityQuestionsForm.reset({
+                question1: values.question1,
+                answer1: '',
+                question2: values.question2,
+                answer2: '',
+            });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Error al actualizar las preguntas de seguridad');
+        } finally {
+            setIsSubmittingQuestions(false);
+        }
+    };
+
     const isIndependent = user?.organization?.planType === OrganizationPlanType.INDEPENDENT;
     const isOwner = user?.organizationRole === OrganizationRole.OWNER;
     const hasDoctorProfile = !!user?.doctorProfile;
+    const hasOrgAccess = user && [OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN].includes((user.organizationRole || user.systemRole) as any);
+    const tabCount = 2 + (hasDoctorProfile ? 1 : 0) + (hasOrgAccess ? 1 : 0);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                    <User className="h-8 w-8 text-primary" />
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+                    <User className="w-8 h-8 text-primary" />
                     Mi Perfil
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -213,7 +287,8 @@ export default function ProfilePage() {
             <Tabs defaultValue="account" className="w-full">
                 <TabsList className={cn(
                     "grid w-full mb-8",
-                    hasDoctorProfile ? "lg:w-[540px] grid-cols-4" : "lg:w-[400px] grid-cols-3"
+                    tabCount === 4 ? "lg:w-[540px] grid-cols-4" :
+                    tabCount === 3 ? "lg:w-[400px] grid-cols-3" : "lg:w-[270px] grid-cols-2"
                 )}>
                     <TabsTrigger value="account" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
@@ -225,10 +300,12 @@ export default function ProfilePage() {
                             Profesional
                         </TabsTrigger>
                     )}
-                    <TabsTrigger value="organization" className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        {isIndependent ? 'Consultorio' : 'Clínica'}
-                    </TabsTrigger>
+                    {hasOrgAccess && (
+                        <TabsTrigger value="organization" className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4" />
+                            {isIndependent ? 'Consultorio' : 'Clínica'}
+                        </TabsTrigger>
+                    )}
                     <TabsTrigger value="security" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" />
                         Seguridad
@@ -254,6 +331,19 @@ export default function ProfilePage() {
                                                 <FormLabel>Nombre Completo</FormLabel>
                                                 <FormControl>
                                                     <Input {...field} placeholder="Su nombre" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={accountForm.control}
+                                        name="username"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Nombre de Usuario</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Nombre de usuario" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -343,101 +433,103 @@ export default function ProfilePage() {
                     </TabsContent>
                 )}
 
-                <TabsContent value="organization">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{isIndependent ? 'Detalles del Consultorio' : 'Detalles de la Clínica'}</CardTitle>
-                            <CardDescription>
-                                {isIndependent 
-                                    ? 'Configure la información de su consultorio independiente.' 
-                                    : 'Administre la información pública de su centro médico.'}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Form {...orgForm}>
-                                <form onSubmit={orgForm.handleSubmit(onOrgSubmit)} className="space-y-4 max-w-md">
-                                    <FormField
-                                        control={orgForm.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Nombre Comercial</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Nombre de la clínica o consultorio" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={orgForm.control}
-                                        name="type"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                    Tipo de Centro
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Ej. Policlínica, Unidad Dental..." />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    {!isIndependent && (
+                {hasOrgAccess && (
+                    <TabsContent value="organization">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{isIndependent ? 'Detalles del Consultorio' : 'Detalles de la Clínica'}</CardTitle>
+                                <CardDescription>
+                                    {isIndependent 
+                                        ? 'Configure la información de su consultorio independiente.' 
+                                        : 'Administre la información pública de su centro médico.'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Form {...orgForm}>
+                                    <form onSubmit={orgForm.handleSubmit(onOrgSubmit)} className="space-y-4 max-w-md">
                                         <FormField
                                             control={orgForm.control}
-                                            name="size"
+                                            name="name"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="flex items-center gap-2">
-                                                        <Briefcase className="h-4 w-4 text-muted-foreground" />
-                                                        Tamaño del Centro
-                                                    </FormLabel>
+                                                    <FormLabel>Nombre Comercial</FormLabel>
                                                     <FormControl>
-                                                        <Input {...field} placeholder="Ej. 2-5 médicos" />
+                                                        <Input {...field} placeholder="Nombre de la clínica o consultorio" />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
-
-                                    {isOwner && !isIndependent && (
                                         <FormField
                                             control={orgForm.control}
-                                            name="allowAdminAudit"
+                                            name="type"
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                                    <div className="space-y-0.5">
-                                                        <FormLabel className="text-base">Permitir Auditoría a Admins</FormLabel>
-                                                        <FormDescription>
-                                                            Los administradores podrán ver el dashboard de auditoría.
-                                                        </FormDescription>
-                                                    </div>
+                                                <FormItem>
+                                                    <FormLabel className="flex items-center gap-2">
+                                                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                                                        Tipo de Centro
+                                                    </FormLabel>
                                                     <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
+                                                        <Input {...field} placeholder="Ej. Policlínica, Unidad Dental..." />
                                                     </FormControl>
+                                                    <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
+                                        {!isIndependent && (
+                                            <FormField
+                                                control={orgForm.control}
+                                                name="size"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="flex items-center gap-2">
+                                                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                                                            Tamaño del Centro
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} placeholder="Ej. 2-5 médicos" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
 
-                                    <Button type="submit" disabled={isSubmittingOrg}>
-                                        {isSubmittingOrg ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                        Actualizar Información
-                                    </Button>
-                                </form>
-                            </Form>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                                        {isOwner && !isIndependent && (
+                                            <FormField
+                                                control={orgForm.control}
+                                                name="allowAdminAudit"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                                        <div className="space-y-0.5">
+                                                            <FormLabel className="text-base">Permitir Auditoría a Admins</FormLabel>
+                                                            <FormDescription>
+                                                                Los administradores podrán ver el dashboard de auditoría.
+                                                            </FormDescription>
+                                                        </div>
+                                                        <FormControl>
+                                                            <Switch
+                                                                checked={field.value}
+                                                                onCheckedChange={field.onChange}
+                                                            />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
 
-                <TabsContent value="security">
+                                        <Button type="submit" disabled={isSubmittingOrg}>
+                                            {isSubmittingOrg ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                            Actualizar Información
+                                        </Button>
+                                    </form>
+                                </Form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
+
+                <TabsContent value="security" className="space-y-6">
                     <Card>
                         <CardHeader>
                             <CardTitle>Seguridad de la Cuenta</CardTitle>
@@ -477,6 +569,111 @@ export default function ProfilePage() {
                                     <Button type="submit" variant="destructive" disabled={isSubmittingSecurity}>
                                         {isSubmittingSecurity ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                         Cambiar Contraseña
+                                    </Button>
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Preguntas de Seguridad</CardTitle>
+                            <CardDescription>
+                                Configure sus preguntas para poder recuperar sus credenciales en caso de olvido.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Form {...securityQuestionsForm}>
+                                <form onSubmit={securityQuestionsForm.handleSubmit(onQuestionsSubmit)} className="space-y-4 max-w-md">
+                                    <FormField
+                                        control={securityQuestionsForm.control}
+                                        name="question1"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1.5">
+                                                <FormLabel>Pregunta 1</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50/50">
+                                                            <SelectValue placeholder="Seleccione una pregunta" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {securityQuestionsList.map((q, idx) => (
+                                                            <SelectItem key={idx} value={q}>
+                                                                {q}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={securityQuestionsForm.control}
+                                        name="answer1"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1.5">
+                                                <FormLabel>Respuesta 1</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Nueva respuesta 1"
+                                                        className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white rounded-xl text-sm"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={securityQuestionsForm.control}
+                                        name="question2"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1.5">
+                                                <FormLabel>Pregunta 2</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50/50">
+                                                            <SelectValue placeholder="Seleccione una pregunta" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {securityQuestionsList.map((q, idx) => (
+                                                            <SelectItem key={idx} value={q}>
+                                                                {q}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={securityQuestionsForm.control}
+                                        name="answer2"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-1.5">
+                                                <FormLabel>Respuesta 2</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Nueva respuesta 2"
+                                                        className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white rounded-xl text-sm"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <Button type="submit" disabled={isSubmittingQuestions}>
+                                        {isSubmittingQuestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                        Actualizar Preguntas de Seguridad
                                     </Button>
                                 </form>
                             </Form>

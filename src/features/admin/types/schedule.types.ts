@@ -12,6 +12,7 @@ export interface DoctorWithUser {
 export interface Schedule {
     id: string;
     diaSemana: number; // 0=Domingo, 1=Lunes, ..., 6=Sábado
+    fecha?: string;     // "YYYY-MM-DD" (opcional)
     horaInicio: string; // "09:00:00"
     horaFin: string;    // "11:45:00"
     doctor: DoctorWithUser;
@@ -23,6 +24,7 @@ export interface Schedule {
 
 export interface CreateScheduleRequest {
     diaSemana: number;
+    fecha?: string;     // YYYY-MM-DD (opcional)
     horaInicio: string; // HH:MM:SS
     horaFin: string;    // HH:MM:SS
     doctorId: string;

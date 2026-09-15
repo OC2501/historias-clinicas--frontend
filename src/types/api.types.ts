@@ -18,9 +18,13 @@ export type ApiOneResponse<T> = T;
 
 // Respuesta paginada de múltiples recursos
 export interface ApiAllResponse<T> {
-    meta: ApiMetadata;
-    status: ApiStatus;
+    meta?: ApiMetadata;
+    status?: ApiStatus;
     data: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    lastPage?: number;
 }
 
 // Parámetros de paginación para queries
@@ -32,4 +36,8 @@ export interface PaginationParams {
     doctorId?: string;
     specialty?: string;
     isActive?: boolean;
+    gender?: string;
+    gerencia?: string;
+    patientType?: string;
+    relationship?: string;
 }

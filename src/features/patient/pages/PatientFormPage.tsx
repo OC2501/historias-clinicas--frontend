@@ -13,6 +13,10 @@ export function PatientFormPage() {
     const { 
         form, 
         doctors, 
+        uniqueGerencias,
+        titularesList,
+        selectedTitular,
+        setSelectedTitular,
         isSubmitting, 
         isLoading, 
         isEdit, 
@@ -53,6 +57,10 @@ export function PatientFormPage() {
                     <PatientFormUI 
                         form={form}
                         doctors={doctors}
+                        uniqueGerencias={uniqueGerencias}
+                        titularesList={titularesList}
+                        selectedTitular={selectedTitular}
+                        setSelectedTitular={setSelectedTitular}
                         isSubmitting={isSubmitting}
                         isEdit={isEdit}
                         onSubmit={onSubmit}

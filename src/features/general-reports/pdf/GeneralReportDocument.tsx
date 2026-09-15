@@ -1,6 +1,7 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { LOGO_MINAGUAS, LOGO_HIDROVEN } from '@/assets/logos';
 import type {
   DashboardSummary,
   SpecialtyDistribution,
@@ -13,7 +14,6 @@ import { NativePieChart } from './NativePieChart';
 import { NativeAreaChart } from './NativeAreaChart';
 import { NativeBarChart } from './NativeBarChart';
 import { NativeHorizontalBarChart } from './NativeHorizontalBarChart';
-import { NativeGaugeChart } from './NativeGaugeChart';
 import { NativeRadarChart } from './NativeRadarChart';
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -34,50 +34,45 @@ const styles = StyleSheet.create({
     color: TEXT_PRIMARY,
   },
   // Header
-  header: {
+  headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 12,
-    borderBottom: `1.5pt solid ${PRIMARY}`,
+    borderBottom: `2pt solid ${PRIMARY}`,
+    paddingBottom: 10,
+    marginBottom: 15,
   },
-  headerBadge: {
-    backgroundColor: PRIMARY,
-    padding: '5 10',
-    borderRadius: 4,
+  logoMinAguas: {
+    width: 120,
+    height: 35,
+    objectFit: 'contain',
   },
-  headerBadgeText: {
-    color: '#fff',
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  logoHidroven: {
+    width: 60,
+    height: 35,
+    objectFit: 'contain',
   },
-  headerCenter: {
+  headerTextContainer: {
     alignItems: 'center',
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 15,
+  institutionTitle: {
+    fontSize: 9,
     fontFamily: 'Helvetica-Bold',
     color: TEXT_PRIMARY,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  reportTitle: {
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1a5f9c',
+    marginTop: 3,
+    textAlign: 'center',
   },
   headerSubtitle: {
     fontSize: 8,
     color: TEXT_MUTED,
     marginTop: 3,
-  },
-  headerRight: {
-    width: 70,
-    alignItems: 'flex-end',
-  },
-  headerPeriod: {
-    fontSize: 7,
-    color: TEXT_MUTED,
-    textAlign: 'right',
   },
   // Stats Grid
   statsRow: {
@@ -140,6 +135,7 @@ const styles = StyleSheet.create({
     padding: 10,
     border: `1pt solid ${BORDER}`,
     borderRadius: 6,
+    overflow: 'hidden',
   },
   colTitle: {
     fontSize: 8,
@@ -203,6 +199,8 @@ export const GeneralReportDocument = ({
     totalPatients: 0,
     totalConsultations: 0,
     activeDoctors: 0,
+    totalReposos: 0,
+    totalAppointments: 0,
     dischargeRate: 0,
   };
 
@@ -245,17 +243,16 @@ export const GeneralReportDocument = ({
   // Is daily grouping (based on whether dates contain full day YYYY-MM-DD)
 
   const ReportHeader = ({ page, total }: { page: number; total: number }) => (
-    <View style={styles.header}>
-      <View style={styles.headerBadge}>
-        <Text style={styles.headerBadgeText}>Reportes Clínicos</Text>
+    <View style={styles.headerContainer}>
+      <Image src={LOGO_MINAGUAS} style={styles.logoMinAguas} />
+      <View style={styles.headerTextContainer}>
+        <Text style={styles.institutionTitle}>PORTAL CLÍNICO DE HISTORIAS - HIDROVEN-FALCÓN</Text>
+        <Text style={styles.reportTitle}>REPORTE ESTADÍSTICO GENERAL</Text>
+        <Text style={styles.headerSubtitle}>Generado el {dateStr} • Período: {periodLabel}</Text>
       </View>
-      <View style={styles.headerCenter}>
-        <Text style={styles.headerTitle}>Reporte General</Text>
-        <Text style={styles.headerSubtitle}>Generado el {dateStr}</Text>
-      </View>
-      <View style={styles.headerRight}>
-        <Text style={styles.headerPeriod}>Período: {periodLabel}</Text>
-        <Text style={[styles.headerPeriod, { marginTop: 3 }]}>Pág. {page} de {total}</Text>
+      <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+        <Image src={LOGO_HIDROVEN} style={styles.logoHidroven} />
+        <Text style={{ fontSize: 7, color: TEXT_MUTED, marginTop: 3 }}>Pág. {page} de {total}</Text>
       </View>
     </View>
   );
@@ -287,9 +284,9 @@ export const GeneralReportDocument = ({
             </View>
           )}
           <View style={[styles.statCard, { borderLeftColor: '#f59e0b' }]}>
-            <Text style={styles.statLabel}>Tasa de Altas</Text>
-            <Text style={styles.statValue}>{safeSum.dischargeRate.toFixed(1)}%</Text>
-            <Text style={styles.statSub}>pacientes dados de alta</Text>
+            <Text style={styles.statLabel}>Reposos Médicos</Text>
+            <Text style={styles.statValue}>{(safeSum.totalReposos ?? 0).toLocaleString()}</Text>
+            <Text style={styles.statSub}>emitidos en el período</Text>
           </View>
         </View>
 
@@ -310,7 +307,7 @@ export const GeneralReportDocument = ({
               </View>
               <View style={styles.colBordered}>
                 <Text style={styles.colTitle}>Cobertura (Radar)</Text>
-                <NativeRadarChart data={specialties ?? []} size={160} color={PRIMARY} />
+                <NativeRadarChart data={specialties ?? []} size={145} color={PRIMARY} />
               </View>
             </View>
           </>
@@ -354,15 +351,6 @@ export const GeneralReportDocument = ({
               height={120}
             />
           </View>
-        </View>
-
-        {/* Tasa de Altas Gauge */}
-        <Text style={styles.sectionTitle}>Indicador de Alta Médica</Text>
-        <View style={[styles.chartBox, { alignItems: 'center', paddingVertical: 20 }]}>
-          <NativeGaugeChart rate={safeSum.dischargeRate} size={200} color="#10b981" />
-          <Text style={{ fontSize: 9, color: TEXT_MUTED, marginTop: 8, textAlign: 'center' }}>
-            El {safeSum.dischargeRate.toFixed(1)}% de las consultas terminaron en alta médica durante el período analizado.
-          </Text>
         </View>
 
         <Text style={styles.footer}>

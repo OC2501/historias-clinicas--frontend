@@ -22,7 +22,7 @@ export function usePatient(id?: string) {
 
     // 3. Query para las notas de evolución (opcional, por si no vienen en la historia)
     const notesQuery = useQuery({
-        queryKey: ['clinical-history-notes'],
+        queryKey: ['clinical-history-notes', 'by-patient', id],
         queryFn: () => clinicalHistoryNoteApi.getAll(),
         enabled: !!isValidId,
     });
@@ -38,23 +38,31 @@ export function usePatient(id?: string) {
         return actualData;
     }, [patientQuery.data]);
     
-    // Filtrado local por patientId
+    // Filtrado local por patientId asegurando solo registros activos
     const histories = useMemo(() => {
-        // Intentamos sacar las historias del objeto paciente directamente si existen
+        let list: any[] = [];
         if (patient?.clinicalHistories && patient.clinicalHistories.length > 0) {
-            return patient.clinicalHistories;
+            list = patient.clinicalHistories;
+        } else {
+            const rawData = (historiesQuery.data as any)?.data?.data || (historiesQuery.data as any)?.data || [];
+            list = rawData.filter((h: any) => {
+                const hPatientId = h.patient?.id || h.patientId || h.patient;
+                return String(hPatientId) === String(id);
+            });
         }
-
-        const rawData = (historiesQuery.data as any)?.data?.data || (historiesQuery.data as any)?.data || [];
-        return rawData.filter((h: any) => {
-            const hPatientId = h.patient?.id || h.patientId || h.patient;
-            return String(hPatientId) === String(id);
+        // Filtrar activos y deduplicar por id
+        const uniqueMap = new Map<string, any>();
+        list.filter((h: any) => h && h.isActive !== false).forEach((h: any) => {
+            if (h.id && !uniqueMap.has(h.id)) {
+                uniqueMap.set(h.id, h);
+            }
         });
+        return Array.from(uniqueMap.values());
     }, [historiesQuery.data, id, patient]);
 
     const notes = useMemo(() => {
         // Intentar obtener notas de las historias ya filtradas primero
-        const notesFromHistories = histories.flatMap((h: any) => h.notes || []);
+        const notesFromHistories = histories.flatMap((h: any) => h.notes || []).filter((n: any) => n && n.isActive !== false);
         if (notesFromHistories.length > 0) return notesFromHistories;
 
         // Si no, filtrar de la query de notas global
@@ -62,7 +70,7 @@ export function usePatient(id?: string) {
         const patientHistoryIds = histories.map((h: any) => String(h.id));
         return rawNotes.filter((note: any) => {
             const noteHistoryId = note.clinicalHistoryId || note.historyId || note.clinicalHistory?.id;
-            return patientHistoryIds.includes(String(noteHistoryId));
+            return patientHistoryIds.includes(String(noteHistoryId)) && note.isActive !== false;
         });
     }, [notesQuery.data, histories]);
 

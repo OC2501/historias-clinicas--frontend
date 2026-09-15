@@ -20,7 +20,7 @@ import React from "react"
 
 const chartConfig = {
   count: {
-    label: "Consultas",
+    label: "Atenciones",
     color: "var(--primary)",
   },
 } satisfies ChartConfig

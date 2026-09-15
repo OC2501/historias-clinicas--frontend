@@ -1,11 +1,13 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { User, Phone, MapPin, Edit, Plus, ArrowLeft, Activity, Trash2 } from 'lucide-react';
+import { User, Phone, MapPin, Edit, Plus, ArrowLeft, Activity, Trash2, Camera, Loader2, Users, HeartHandshake } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getFileUrl, formatPatientAge, safeParseDate } from '@/lib/utils';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,10 +19,11 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
-import { patientsApi } from '@/api';
+import { patientsApi, uploadsApi } from '@/api';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Patient } from '@/types';
+import { PATIENT_TYPE_LABELS, RELATIONSHIP_LABELS } from '@/types/enums';
 import { PatientStatusBadge } from './PatientStatusBadge';
 
 interface PatientDetailHeaderProps {
@@ -30,14 +33,16 @@ interface PatientDetailHeaderProps {
 // Función auxiliar para formateo seguro
 const safeFormat = (dateString: string | null | undefined, formatStr: string) => {
     if (!dateString) return 'No registrada';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Fecha inválida';
+    const date = safeParseDate(dateString);
+    if (!date || isNaN(date.getTime())) return 'Fecha inválida';
     return format(date, formatStr, { locale: es });
 };
 
 export function PatientDetailHeader({ patient }: PatientDetailHeaderProps) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const photoInputRef = useRef<HTMLInputElement>(null);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
     // Acceso extremadamente seguro a las iniciales
     const getInitials = () => {
@@ -48,6 +53,31 @@ export function PatientDetailHeader({ patient }: PatientDetailHeaderProps) {
     };
 
     const initials = getInitials();
+
+    const isBeneficiario = patient.patientType === 'BENEFICIARIO';
+    const relationshipLabel = patient.relationship ? (RELATIONSHIP_LABELS[patient.relationship] || patient.relationship) : 'Familiar';
+
+    const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingPhoto(true);
+        try {
+            const res = await uploadsApi.uploadSingle(file);
+            await patientsApi.update(patient.id, {
+                photoUrl: res.url,
+            });
+            toast.success('Foto de perfil actualizada correctamente');
+            queryClient.invalidateQueries({ queryKey: ['patient', patient.id] });
+            queryClient.invalidateQueries({ queryKey: ['patients'] });
+        } catch (error) {
+            console.error('Error al subir foto:', error);
+            toast.error('Error al subir la foto de perfil');
+        } finally {
+            setIsUploadingPhoto(false);
+            if (photoInputRef.current) photoInputRef.current.value = '';
+        }
+    };
 
     const handleDelete = async () => {
         try {
@@ -88,35 +118,86 @@ export function PatientDetailHeader({ patient }: PatientDetailHeaderProps) {
                         >
                             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                         </Button>
-                        <Avatar className="h-20 w-20 sm:h-20 sm:w-20 border-4 border-background shadow-lg shrink-0">
-                            <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/10 to-primary/20 text-primary font-bold">
-                                {initials}
-                            </AvatarFallback>
-                        </Avatar>
+
+                        {/* Avatar with photo upload capability */}
+                        <div
+                            className="relative group cursor-pointer shrink-0"
+                            onClick={() => photoInputRef.current?.click()}
+                            title="Haz clic para cambiar la foto de perfil"
+                        >
+                            <Avatar className="h-20 w-20 sm:h-20 sm:w-20 border-4 border-background shadow-lg overflow-hidden">
+                                {patient.photoUrl && (
+                                    <AvatarImage src={getFileUrl(patient.photoUrl)} alt={`${patient.firstName} ${patient.lastName}`} className="object-cover h-full w-full" />
+                                )}
+                                <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/10 to-primary/20 text-primary font-bold">
+                                    {initials}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                {isUploadingPhoto ? (
+                                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                ) : (
+                                    <Camera className="h-6 w-6 text-white" />
+                                )}
+                            </div>
+                            <input
+                                ref={photoInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handlePhotoSelect}
+                            />
+                        </div>
                     </div>
 
                     <div className="w-9 sm:hidden" /> {/* Spacer to balance the back button on mobile */}
                 </div>
 
-                <div className="mt-1 sm:mt-0 flex flex-col items-center sm:items-start">
-                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight break-words">
-                        {patient.firstName} {patient.lastName}
-                    </h1>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
+                <div className="mt-1 sm:mt-0 flex flex-col items-center sm:items-start space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight break-words">
+                            {patient.firstName} {patient.lastName}
+                        </h1>
+                        {isBeneficiario ? (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 font-bold text-xs">
+                                <Users className="h-3 w-3 mr-1" />
+                                Beneficiario ({relationshipLabel})
+                            </Badge>
+                        ) : (
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-bold text-xs">
+                                <User className="h-3 w-3 mr-1" />
+                                Trabajador Titular
+                            </Badge>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2">
                         <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 px-3 py-1 font-semibold shadow-none">
-                            {patient.identificationNumber || 'Sin Documento'}
+                            {patient.identificationNumber ? `C.I: ${patient.identificationNumber}` : 'Sin Documento'}
                         </Badge>
                         <Badge variant="outline" className="px-3 py-1 font-semibold text-muted-foreground shadow-none">
-                            {patient.gender === 'MALE' ? 'M' : 'F'} – {safeFormat(patient.birthDate, 'dd MMM yyyy')}
+                            {patient.gender === 'MALE' ? 'Masc.' : 'Fem.'} • {formatPatientAge(patient.birthDate)} ({safeFormat(patient.birthDate, 'dd MMM yyyy')})
                         </Badge>
                         <PatientStatusBadge status={patient.status} />
+
+                        {isBeneficiario && patient.titular && (
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/patients/${patient.titular?.id}`)}
+                                className="text-xs text-primary font-semibold hover:underline flex items-center gap-1 bg-primary/5 px-2.5 py-1 rounded-md border border-primary/10 transition-colors hover:bg-primary/10"
+                                title="Ver expediente del titular"
+                            >
+                                <HeartHandshake className="h-3.5 w-3.5" />
+                                Titular: {patient.titular.firstName} {patient.titular.lastName}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 relative z-10 w-full md:w-auto mt-2 md:mt-0">
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto order-first">
-                    <Button onClick={() => navigate(`/clinical-history/new?patientId=${patient.id}`)} className="rounded-xl px-6 py-6 sm:py-2 h-auto sm:h-10 text-base sm:text-sm font-bold sm:font-semibold shadow-md w-full sm:w-auto order-first sm:order-last">
+                    <Button onClick={() => navigate(`/consultas?patientId=${patient.id}`)} className="rounded-xl px-6 py-6 sm:py-2 h-auto sm:h-10 text-base sm:text-sm font-bold sm:font-semibold shadow-md w-full sm:w-auto order-first sm:order-last">
                         <Plus className="mr-2 h-5 w-5 sm:h-4 sm:w-4" />
                         Nueva Consulta
                     </Button>
@@ -172,6 +253,9 @@ export function InfoItem({ label, value, status }: { label: string; value: strin
 }
 
 export function PatientGeneralInfo({ patient }: { patient: Patient }) {
+    const isBeneficiario = patient.patientType === 'BENEFICIARIO';
+    const relationshipLabel = patient.relationship ? (RELATIONSHIP_LABELS[patient.relationship as keyof typeof RELATIONSHIP_LABELS] || patient.relationship) : 'Familiar';
+
     return (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
             <Card className="border-none shadow-sm lg:col-span-2 overflow-hidden">
@@ -184,15 +268,20 @@ export function PatientGeneralInfo({ patient }: { patient: Patient }) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12 p-8">
+                    <InfoItem label="Condición" value={isBeneficiario ? `Beneficiario (${relationshipLabel})` : 'Trabajador Titular'} />
+                    {isBeneficiario && patient.titular && (
+                        <InfoItem label="Trabajador Titular" value={`${patient.titular.firstName} ${patient.titular.lastName} (C.I: ${patient.titular.identificationNumber || 'S/D'})`} />
+                    )}
                     <InfoItem label="Documento de Identidad" value={patient.identificationNumber} />
-                    <InfoItem label="Fecha de Nacimiento" value={safeFormat(patient.birthDate, 'dd/MM/yyyy')} />
+                    <InfoItem label="Edad / Nacimiento" value={`${formatPatientAge(patient.birthDate)} (${safeFormat(patient.birthDate, 'dd/MM/yyyy')})`} />
                     <InfoItem label="Género" value={patient.gender === 'MALE' ? 'Masculino' : 'Femenino'} />
                     <div className="space-y-1">
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Estado del Paciente</p>
                         <PatientStatusBadge status={patient.status} />
                     </div>
                     <InfoItem label="Correo Electrónico" value={patient.email || 'No registrado'} />
-
+                    <InfoItem label="Gerencia" value={patient.gerencia || 'No asignada'} />
+                    <InfoItem label="Cargo" value={patient.cargo || 'No asignado'} />
                 </CardContent>
             </Card>
 

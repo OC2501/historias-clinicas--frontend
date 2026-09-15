@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
     Plus,
     Loader2,
-    Search
+    Search,
+    Building2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -166,8 +167,11 @@ export function ConsultingRoomsPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Gestión de Consultorios</h1>
-                    <p className="text-muted-foreground">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+                        <Building2 className="w-8 h-8 text-primary" />
+                        Gestión de Consultorios
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Administre la disponibilidad física del centro médico.
                     </p>
                 </div>

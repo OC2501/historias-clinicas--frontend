@@ -34,7 +34,7 @@ interface ConsultationTrendsProps {
   dateRange?: DateRange;
 }
 
-export function ConsultationTrends({ data = [], timeframe = '6m', dateRange }: ConsultationTrendsProps) {
+export function ConsultationTrends({ data = [], timeframe = '1w', dateRange }: ConsultationTrendsProps) {
   const [isMounted, setIsMounted] = React.useState(false);
   const isMobile = useIsMobile();
   React.useEffect(() => { setIsMounted(true); }, []);

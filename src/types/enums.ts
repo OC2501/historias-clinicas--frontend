@@ -12,6 +12,7 @@ export const OrganizationRole = {
     MEDICAL_DIRECTOR: 'MEDICAL_DIRECTOR',
     ADMIN: 'ADMIN',
     DOCTOR: 'DOCTOR',
+    NURSE: 'NURSE',
     SECRETARY: 'SECRETARY',
 } as const;
 export type OrganizationRole = (typeof OrganizationRole)[keyof typeof OrganizationRole];
@@ -54,3 +55,31 @@ export const FieldLayout = {
     THIRD: 'third',
 } as const;
 export type FieldLayout = (typeof FieldLayout)[keyof typeof FieldLayout];
+
+export const PatientType = {
+    TITULAR: 'TITULAR',
+    BENEFICIARIO: 'BENEFICIARIO',
+} as const;
+export type PatientType = (typeof PatientType)[keyof typeof PatientType];
+
+export const RelationshipType = {
+    CONYUGE: 'CONYUGE',
+    HIJO: 'HIJO',
+    PADRE: 'PADRE',
+    MADRE: 'MADRE',
+    OTRO: 'OTRO',
+} as const;
+export type RelationshipType = (typeof RelationshipType)[keyof typeof RelationshipType];
+
+export const PATIENT_TYPE_LABELS: Record<PatientType, string> = {
+    TITULAR: 'Trabajador Titular',
+    BENEFICIARIO: 'Beneficiario (Familiar)',
+};
+
+export const RELATIONSHIP_LABELS: Record<RelationshipType, string> = {
+    CONYUGE: 'Cónyuge',
+    HIJO: 'Hijo/a',
+    PADRE: 'Padre',
+    MADRE: 'Madre',
+    OTRO: 'Otro Familiar',
+};

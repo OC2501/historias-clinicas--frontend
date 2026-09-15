@@ -10,12 +10,12 @@ export function MainLayout() {
     const { isMobileMenuOpen, setMobileMenuOpen } = useUIStore();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
+        <div className="flex h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-background">
             {/* Alerts Modal - shown automatically on first login with unread alerts */}
             <AlertsModal />
 
             {/* Desktop Sidebar */}
-            <div className="hidden lg:block h-screen max-h-screen sticky top-0 transition-all duration-300 ease-in-out">
+            <div className="hidden lg:block h-[100dvh] max-h-[100dvh] sticky top-0 transition-all duration-300 ease-in-out shrink-0 relative z-30">
                 <Sidebar />
             </div>
 
@@ -28,10 +28,10 @@ export function MainLayout() {
             </Sheet>
 
             {/* Main Content Area */}
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden min-w-0 h-full">
                 <Header />
 
-                <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] lg:pb-8">
                     <div className="mx-auto max-w-7xl">
                         <Breadcrumbs />
                         <div className="mt-4">

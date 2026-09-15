@@ -51,8 +51,8 @@ export function AppointmentsByDayChart({ data }: AppointmentsByDayChartProps) {
             <p className="font-bold text-sm tracking-tight">No hay actividad en este periodo</p>
           </div>
         ) : (
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[350px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart
                 data={data.byDay}
                 layout={isMobile ? "vertical" : "horizontal"}

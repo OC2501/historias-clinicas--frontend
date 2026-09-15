@@ -4,8 +4,27 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MC Portal Clínico</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="google" content="notranslate" />
+  <title>Portal Clínico Hidroven-Falcón</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+    rel="stylesheet">
+  <script>
+    if (typeof global === 'undefined') {
+      window.global = window;
+    }
+    if (typeof window.Buffer === 'undefined') {
+      // Basic Buffer fallback mock for browser environments
+      window.Buffer = {
+        isBuffer: () => false,
+        from: () => [],
+        concat: () => [],
+        alloc: () => new Uint8Array(),
+      };
+    }
+  </script>
 </head>
 
 <body>

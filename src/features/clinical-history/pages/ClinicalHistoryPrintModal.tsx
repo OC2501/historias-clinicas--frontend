@@ -8,11 +8,13 @@ import {
     DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, Download, FileText, Loader2, Info } from 'lucide-react';
+import { Download, Loader2, Info } from 'lucide-react';
 import { pdf } from '@react-pdf/renderer';
 import { MedicalReportPDF } from '@/features/clinical-history/pdf/MedicalReportPDF';
 import { EvolutionNotePDF } from '@/features/clinical-history/pdf/EvolutionNotePDF';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { specialtiesApi } from '@/api';
 
 interface ClinicalHistoryPrintModalProps {
     isOpen: boolean;
@@ -28,7 +30,20 @@ export function ClinicalHistoryPrintModal({
     const [isGeneratingHistory, setIsGeneratingHistory] = useState(false);
     const [isGeneratingNote, setIsGeneratingNote] = useState(false);
 
+    // Cargar plantillas de especialidad para adaptar el PDF dinámicamente
+    const { data: templatesRes } = useQuery({
+        queryKey: ['specialty-templates'],
+        queryFn: () => specialtiesApi.getAll({ limit: 100 }),
+        enabled: isOpen && !!history,
+    });
+
     if (!history) return null;
+
+    const templates = (templatesRes?.data?.data || templatesRes?.data || []) as any[];
+    const activeTemplate = templates.find((t: any) =>
+        t.id === history.templateId ||
+        (!history.templateId && t.specialty?.toUpperCase() === history.specialty?.toUpperCase())
+    )?.estructura || null;
 
     const patientName = `${history.patient?.firstName || ''} ${history.patient?.lastName || ''}`.trim();
 
@@ -40,12 +55,17 @@ export function ClinicalHistoryPrintModal({
                     data={history}
                     patient={history.patient}
                     doctor={history.doctor}
+                    activeTemplate={activeTemplate}
                 />
             );
             const blob = await pdf(doc).toBlob();
             const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            toast.success('Generando reporte para impresión...');
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Historia_Clinica_${history.patient?.lastName || 'Paciente'}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+            toast.success('Historia clínica descargada');
         } catch (error) {
             console.error('Error generating PDF:', error);
             toast.error('Error al generar el PDF de la historia clínica');
@@ -88,12 +108,12 @@ export function ClinicalHistoryPrintModal({
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2 text-primary">
                         <div className="p-2 bg-primary/10 rounded-xl">
-                            <Printer className="h-5 w-5" />
+                            <Download className="h-5 w-5" />
                         </div>
-                        <DialogTitle className="text-xl">Opciones de Impresión</DialogTitle>
+                        <DialogTitle className="text-xl">Opciones de Descarga</DialogTitle>
                     </div>
                     <DialogDescription className="text-sm">
-                        Seleccione el formato que desea para el paciente:
+                        Seleccione el formato que desea descargar para el paciente:
                     </DialogDescription>
                 </DialogHeader>
 
@@ -114,15 +134,15 @@ export function ClinicalHistoryPrintModal({
                             disabled={isGeneratingHistory}
                         >
                             <div className="p-2 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-white transition-all">
-                                {isGeneratingHistory ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileText className="h-5 w-5" />}
+                                {isGeneratingHistory ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
                             </div>
                             <div className="text-left">
-                                <p className="font-bold text-primary">Imprimir Historia Clínica</p>
+                                <p className="font-bold text-primary">Descargar Historia Clínica</p>
                                 <p className="text-xs text-muted-foreground">Documento completo con antecedentes y examen.</p>
                             </div>
                         </Button>
 
-                         <Button
+                        <Button
                             variant="outline"
                             className="h-16 justify-start gap-4 px-4 border-primary/20 hover:bg-primary/5 hover:border-primary/40 group transition-all"
                             onClick={handleDownloadNote}

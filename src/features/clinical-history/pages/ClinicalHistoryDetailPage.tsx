@@ -3,14 +3,19 @@ import {
     ArrowLeft,
     FileText,
     Plus,
-    
     User,
     Calendar,
     Stethoscope,
     Clock,
     History,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Activity,
+    ClipboardList,
+    Sparkles,
+    Pencil,
+    Pill,
+    Paperclip
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,22 +25,40 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { ClinicalHistory, ClinicalHistoryNote } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, safeFormat } from '@/lib/utils';
 import { useClinicalHistory } from '@/features/clinical-history/hooks/useClinicalHistory';
 import { Carousel } from '@/components/ui/carousel';
 import { sanitizeHtml } from '@/lib/sanitize';
+import { useQuery } from '@tanstack/react-query';
+import { specialtiesApi } from '@/api';
+import { ClinicalHistoryDocumentsManager } from '@/features/clinical-history/components/ClinicalHistoryDocumentsManager';
 
 export function ClinicalHistoryDetailPage() {
     const navigate = useNavigate();
-    const { history, isLoading, expandedEvents, toggleExpand, allEvents } = useClinicalHistory();
+    const { history, isLoading: isLoadingHistory, expandedEvents, toggleExpand, allEvents } = useClinicalHistory();
+
+    const { data: templatesRes, isLoading: isLoadingTemplates } = useQuery({
+        queryKey: ['specialty-templates'],
+        queryFn: () => specialtiesApi.getAll(),
+    });
+
+    const isLoading = isLoadingHistory || isLoadingTemplates;
 
     if (isLoading) return <div className="p-8 text-center text-muted-foreground">Cargando...</div>;
     if (!history) return <div className="p-8 text-center text-muted-foreground">No se encontró la historia clínica.</div>;
 
+    const templates = (templatesRes?.data?.data || templatesRes?.data || []) as any[];
+    const activeTemplate = history
+        ? templates.find((t: any) => 
+            t.id === history.templateId || 
+            (!history.templateId && t.specialty?.toUpperCase() === history.specialty?.toUpperCase())
+          )?.estructura || null
+        : null;
+
     const recentNotes = (history.notes || []).slice(0, 10);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-700">
+        <div className="w-full max-w-5xl mx-auto space-y-6 animate-in fade-in duration-700">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="hover:bg-primary/10 transition-colors">
@@ -49,7 +72,15 @@ export function ClinicalHistoryDetailPage() {
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <Button onClick={() => navigate(`/clinical-history/notes/new?historyId=${history.id}`)} className="w-full sm:w-auto shadow-lg hover:scale-105 transition-all">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => navigate(`/clinical-history/${history.id}/edit`)} 
+                        className="w-full sm:w-auto border-primary/20 hover:bg-primary/5 text-primary shadow-xs font-medium"
+                    >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar Historia
+                    </Button>
+                    <Button onClick={() => navigate(`/clinical-history-note/new?historyId=${history.id}`)} className="w-full sm:w-auto shadow-lg hover:scale-105 transition-all">
                         <Plus className="mr-2 h-4 w-4" />
                         Añadir Nota
                     </Button>
@@ -90,7 +121,7 @@ export function ClinicalHistoryDetailPage() {
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <Badge variant="outline" className="bg-primary/5 text-primary border-primary/10">
-                                                {format(new Date(note.fecha), 'dd MMM yyyy', { locale: es })}
+                                                {safeFormat(note.fecha, 'dd MMM yyyy', 'S/F')}
                                             </Badge>
                                             <Clock className="h-4 w-4 text-muted-foreground/30" />
                                         </div>
@@ -122,7 +153,10 @@ export function ClinicalHistoryDetailPage() {
             {/* Patient Summary Card */}
             <Card className="bg-muted/30">
                 <CardContent className="p-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className={cn(
+                        "grid gap-6",
+                        activeTemplate ? "grid-cols-2 md:grid-cols-6" : "grid-cols-2 md:grid-cols-5"
+                    )}>
                         <div className="space-y-1">
                             <span className="text-xs text-muted-foreground uppercase font-semibold">Paciente</span>
                             <div className="flex items-center gap-2">
@@ -142,19 +176,41 @@ export function ClinicalHistoryDetailPage() {
                             <div className="flex items-center gap-2">
                                 <Stethoscope className="h-4 w-4 text-primary" />
                                 <Badge variant="secondary" className="capitalize">
-                                    {history.specialty.toLowerCase()}
+                                    {(activeTemplate ? (history.doctor?.specialty || 'General') : history.specialty).toLowerCase()}
                                 </Badge>
                             </div>
                         </div>
+                        {activeTemplate && (
+                            <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground uppercase font-semibold">Plantilla</span>
+                                <div className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    <Badge variant="outline" className="capitalize border-primary/20 bg-primary/5 text-primary">
+                                        {history.specialty.toLowerCase()}
+                                    </Badge>
+                                </div>
+                            </div>
+                        )}
                         <div className="space-y-1">
                             <span className="text-xs text-muted-foreground uppercase font-semibold">Fecha Inicio</span>
                             <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-primary" />
                                 <span className="font-medium">
-                                    {format(new Date(history.fecha), 'PP', { locale: es })}
+                                    {safeFormat(history.fecha, 'PP', 'S/F')}
                                 </span>
                             </div>
                         </div>
+                        {history.updatedAt && (
+                            <div className="space-y-1">
+                                <span className="text-xs text-muted-foreground uppercase font-semibold">Última Edición</span>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                    <span className="font-medium text-xs text-emerald-700 dark:text-emerald-300">
+                                        {safeFormat(history.updatedAt, 'dd/MM/yyyy hh:mm a', 'Reciente')}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -198,12 +254,29 @@ export function ClinicalHistoryDetailPage() {
                                                 </span>
                                             </CardDescription>
                                         </div>
-                                        <Button variant="ghost" size="icon" onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleExpand(event.id);
-                                        }}>
-                                            {expandedEvents[event.id] ? <ChevronUp /> : <ChevronDown />}
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            {!event.isInitial && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/clinical-history-note/${event.id}/edit`);
+                                                    }}
+                                                    className="h-8 px-2.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 font-medium"
+                                                    title="Editar Nota de Evolución"
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                                                    <span className="hidden sm:inline">Editar</span>
+                                                </Button>
+                                            )}
+                                            <Button variant="ghost" size="icon" onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleExpand(event.id);
+                                            }}>
+                                                {expandedEvents[event.id] ? <ChevronUp /> : <ChevronDown />}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </CardHeader>
                                 {expandedEvents[event.id] && (
@@ -211,9 +284,9 @@ export function ClinicalHistoryDetailPage() {
                                         <Separator className="my-4" />
                                         <div className="space-y-6">
                                             {event.isInitial ? (
-                                                <InitialHistoryDetail history={event.content as ClinicalHistory} />
+                                                <InitialHistoryDetail history={event.content as ClinicalHistory} activeTemplate={activeTemplate} />
                                             ) : (
-                                                <EvolutionNoteDetail note={event.content as any} />
+                                                <EvolutionNoteDetail note={event.content as any} patientId={history.patient?.id} patientDocuments={history.patient?.documents || []} />
                                             )}
                                         </div>
                                     </CardContent>
@@ -227,6 +300,23 @@ export function ClinicalHistoryDetailPage() {
     );
 }
 
+const getSectionIcon = (titulo: string) => {
+    const t = titulo.toLowerCase();
+    if (t.includes('consulta') || t.includes('anamnesis') || t.includes('historia') || t.includes('relato')) {
+        return History;
+    }
+    if (t.includes('antecedentes')) {
+        return User;
+    }
+    if (t.includes('físico') || t.includes('fisico') || t.includes('examen') || t.includes('constantes') || t.includes('signos') || t.includes('vitales')) {
+        return Activity;
+    }
+    if (t.includes('plan') || t.includes('tratamiento') || t.includes('manejo')) {
+        return ClipboardList;
+    }
+    return Sparkles;
+};
+
 const labelsMap: Record<string, string> = {
     presionArterial: 'Presión Arterial',
     frecuenciaCardiaca: 'Frecuencia Cardíaca',
@@ -238,162 +328,372 @@ const labelsMap: Record<string, string> = {
     imc: 'IMC',
     otros: 'Exámenes / Hallazgos Adicionales',
     examenes: 'Exámenes Complementarios',
-    medicacion: 'Medicación/Tratamiento',
-    medication: 'Medicación/Tratamiento'
+    medicacion: 'Medicación / Tratamiento',
+    medication: 'Medicación / Tratamiento',
+    indicaciones: 'Indicaciones Generales',
+    planManejo: 'Plan de Manejo',
 };
 
 const formatLabel = (key: string) => labelsMap[key] || key.replace(/([A-Z])/g, ' $1').trim();
 const isNA = (val: any) => !val || String(val).toUpperCase() === 'N/A' || String(val).toUpperCase() === 'NINGUNO' || String(val).toUpperCase() === 'NINGUNA';
 
-function InitialHistoryDetail({ history }: { history: ClinicalHistory }) {
+const parseJsonIfNeeded = (data: any) => {
+    if (typeof data === 'string') {
+        const trimmed = data.trim();
+        if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+            try {
+                return JSON.parse(trimmed);
+            } catch {
+                return data;
+            }
+        }
+    }
+    return data;
+};
+
+function DiagnosesList({ diagnosticos }: { diagnosticos?: string[] }) {
+    if (!diagnosticos || diagnosticos.length === 0) return null;
+
+    const cleanDiagnosisText = (text: string) => {
+        return text.replace(/^(\d+[\.\-\)\s]+)+/, '').trim();
+    };
+
     return (
-        <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-4">
-                <div>
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Motivo de Consulta</h4>
-                    <p className="text-sm border-l-2 border-muted-foreground/20 pl-4 italic">
-                        {history.motivoConsulta || 'No especificado'}
-                    </p>
-                </div>
-                <div>
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Enfermedad Actual</h4>
-                    <p className="text-sm">
-                        {history.enfermedadActual || 'No especificada'}
-                    </p>
-                </div>
-                {history.antecedentesPersonales && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Antecedentes Personales</h4>
-                        <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(typeof history.antecedentesPersonales === 'string' ? history.antecedentesPersonales : (history.antecedentesPersonales as any).descripcion || 'Ninguno') }} />
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-primary" />
+                <h4 className="text-xs font-bold text-primary uppercase tracking-wider">
+                    Diagnósticos
+                </h4>
+                <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5">
+                    {diagnosticos.length}
+                </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {diagnosticos.map((d, i) => {
+                    const cleaned = cleanDiagnosisText(d) || d;
+                    return (
+                        <div
+                            key={i}
+                            className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/70 shadow-2xs hover:border-primary/40 transition-colors"
+                        >
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold mt-0.5">
+                                {i + 1}
+                            </span>
+                            <span className="text-sm font-medium leading-snug break-words text-foreground">
+                                {cleaned}
+                            </span>
                         </div>
-                    </div>
-                )}
-                {(history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares) && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Antecedentes Familiares</h4>
-                        {(() => {
-                            const antFam = history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares;
-                            return typeof antFam === 'string' ? (
-                                <div className="text-sm border-l-2 border-primary/20 pl-4 prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(antFam) }} />
-                            ) : (
-                                <div className="text-sm border-l-2 border-primary/20 pl-4">{String(antFam)}</div>
-                            );
-                        })()}
-                    </div>
-                )}
-                {history.habitos && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Hábitos Psicobiológicos</h4>
-                        <div className="text-sm border-l-2 border-secondary/20 pl-4 prose-sm max-w-none">
-                            {typeof history.habitos === 'string' ? (
-                                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(history.habitos) }} />
-                            ) : (
-                                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((history.habitos as any).descripcion || 'N/A') }} />
-                            )}
-                        </div>
-                    </div>
-                )}
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function PlanManejoDetail({ planManejo }: { planManejo: any }) {
+    if (!planManejo) return null;
+
+    const parsed = parseJsonIfNeeded(planManejo);
+
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <h4 className="text-xs font-bold text-primary uppercase tracking-wider">
+                    Plan de Manejo y Tratamiento
+                </h4>
             </div>
 
-            <div className="space-y-4">
-                {history.examenFisico && Object.keys(history.examenFisico).length > 0 && (
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Examen Físico</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm p-3 bg-muted/30 rounded-lg">
-                            {Object.entries(history.examenFisico).filter(([k]) => k !== 'otros').map(([k, v]) => (
-                                <div key={k} className="flex flex-col border-b border-muted py-1 last:border-0">
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold">{formatLabel(k)}</span>
-                                    <span className={cn("font-medium", isNA(v) && "text-muted-foreground/40")}>{String(v)}</span>
-                                </div>
-                            ))}
-                        </div>
-                        {history.examenFisico.otros && (
-                            <div className="mt-2">
-                                <span className="text-xs text-muted-foreground font-semibold uppercase">{formatLabel('otros')}</span>
-                                <div className="text-sm border-l-2 border-primary/20 pl-4 mt-1 prose-sm" dangerouslySetInnerHTML={{ __html: sanitizeHtml(history.examenFisico.otros) }} />
-                            </div>
-                        )}
-                    </div>
-                )}
-                {history.diagnosticos && history.diagnosticos.length > 0 && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Diagnósticos</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {history.diagnosticos.map((d, i) => (
-                                <Badge key={i} variant="outline" className="text-xs bg-muted/20 border-primary/20">
-                                    {d}
-                                </Badge>
-                            ))}
-                        </div>
-                    </div>
-                )}
-                {history.planManejo && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Plan de Manejo</h4>
-                        {typeof history.planManejo === 'string' ? (
-                            <p className="text-sm bg-primary/5 p-3 rounded-lg border border-primary/10">{history.planManejo}</p>
-                        ) : (
-                            <div className="space-y-2 bg-primary/5 p-3 rounded-lg border border-primary/10">
-                                {Object.entries(history.planManejo).map(([k, v]) => (
-                                    <div key={k} className="text-sm flex flex-col">
-                                        <span className="font-semibold text-primary/80">{formatLabel(k)}</span>
-                                        <span className={cn("text-muted-foreground", isNA(v) && "opacity-40")}>{String(v)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {history.datosEspecificos && Object.keys(history.datosEspecificos).length > 0 && (
-                <div className="md:col-span-2">
-                    <Separator className="my-2" />
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Hallazgos Específicos</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {Object.entries(history.datosEspecificos).map(([key, value]) => (
-                            <div key={key} className="p-3 rounded-lg bg-muted/40">
-                                <span className="text-xs text-muted-foreground block mb-1 capitalize">
-                                    {key.replace(/([A-Z])/g, ' $1')}
+            {typeof parsed === 'string' ? (
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/15 text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                    {parsed}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(parsed).map(([k, v]) => {
+                        const label = formatLabel(k);
+                        const isMed = k.toLowerCase().includes('medica');
+                        const isFull = k === 'otros' || k === 'indicaciones' || isMed || String(v).length > 120;
+                        return (
+                            <div
+                                key={k}
+                                className={cn(
+                                    "p-4 rounded-xl bg-card border border-border/70 shadow-2xs space-y-1.5",
+                                    isFull ? "md:col-span-2" : "md:col-span-1"
+                                )}
+                            >
+                                <span className="text-xs font-bold text-primary uppercase tracking-wider block flex items-center gap-1.5">
+                                    {isMed ? <Pill className="h-3.5 w-3.5 text-primary" /> : null}
+                                    {label}
                                 </span>
-                                <span className="text-sm font-medium">{String(value)}</span>
+                                <div className={cn("text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed", isNA(v) && "text-muted-foreground/40 italic")}>
+                                    {typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)}
+                                </div>
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
     );
 }
 
-function EvolutionNoteDetail({ note }: { note: any }) {
+function InitialHistoryDetail({ history, activeTemplate }: { history: ClinicalHistory; activeTemplate?: any }) {
+    const patientDocsForHistory = (history.patient?.documents || []).filter(
+        (d: any) => d && typeof d === 'object' && !Array.isArray(d) && (d.name || d.url) && d.clinicalHistoryId === history.id
+    );
+    const historyDirectDocs = (history.documents || []).filter(
+        (d: any) => d && typeof d === 'object' && !Array.isArray(d) && (d.name || d.url)
+    );
+
+    const allHistoryDocs = [...historyDirectDocs];
+    patientDocsForHistory.forEach((pDoc: any) => {
+        if (!allHistoryDocs.some((d: any) => (d.id && d.id === pDoc.id) || (d.url && d.url === pDoc.url))) {
+            allHistoryDocs.push(pDoc);
+        }
+    });
+
+    if (!activeTemplate) {
+        const hasAnamnesis = Boolean(history.motivoConsulta || history.enfermedadActual);
+        const hasAntecedentes = Boolean(history.antecedentesPersonales || history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares || history.habitos);
+        const hasExamen = Boolean(history.examenFisico && Object.keys(history.examenFisico).length > 0);
+
+        return (
+            <div className="space-y-6">
+                {/* 1. Anamnesis / Motivo & Enfermedad Actual */}
+                {hasAnamnesis && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 sm:p-5 rounded-xl bg-muted/20 border border-muted/60">
+                        {history.motivoConsulta && (
+                            <div className="space-y-1.5">
+                                <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                    <FileText className="h-3.5 w-3.5" /> Motivo de Consulta
+                                </span>
+                                <p className="text-sm font-medium text-foreground/90 border-l-2 border-primary/40 pl-3 py-1 italic bg-background/50 rounded-r-md">
+                                    "{history.motivoConsulta}"
+                                </p>
+                            </div>
+                        )}
+                        {history.enfermedadActual && (
+                            <div className={cn("space-y-1.5", !history.motivoConsulta && "md:col-span-2")}>
+                                <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                    <Activity className="h-3.5 w-3.5" /> Enfermedad Actual
+                                </span>
+                                <p className="text-sm text-foreground/90 leading-relaxed border-l-2 border-primary/40 pl-3 py-1 bg-background/50 rounded-r-md">
+                                    {history.enfermedadActual}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 2. Antecedentes & Hábitos */}
+                {hasAntecedentes && (
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5" /> Antecedentes y Hábitos
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {history.antecedentesPersonales && (
+                                <div className="p-4 rounded-xl bg-card border border-border/70 shadow-2xs space-y-2">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                                        Antecedentes Personales
+                                    </span>
+                                    <div className="text-sm prose-sm max-w-none text-foreground/90">
+                                        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(typeof history.antecedentesPersonales === 'string' ? history.antecedentesPersonales : (history.antecedentesPersonales as any).descripcion || 'Ninguno') }} />
+                                    </div>
+                                </div>
+                            )}
+                            {(history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares) && (
+                                <div className="p-4 rounded-xl bg-card border border-border/70 shadow-2xs space-y-2">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                                        Antecedentes Familiares
+                                    </span>
+                                    {(() => {
+                                        const antFam = history.antecedentesFamiliares || history.datosEspecificos?.antecedentesFamiliares;
+                                        return typeof antFam === 'string' ? (
+                                            <div className="text-sm prose-sm max-w-none text-foreground/90" dangerouslySetInnerHTML={{ __html: sanitizeHtml(antFam) }} />
+                                        ) : (
+                                            <div className="text-sm text-foreground/90">{String(antFam)}</div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                            {history.habitos && (
+                                <div className="p-4 rounded-xl bg-card border border-border/70 shadow-2xs space-y-2">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                                        Hábitos Psicobiológicos
+                                    </span>
+                                    <div className="text-sm prose-sm max-w-none text-foreground/90">
+                                        {typeof history.habitos === 'string' ? (
+                                            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(history.habitos) }} />
+                                        ) : (
+                                            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml((history.habitos as any).descripcion || 'N/A') }} />
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* 3. Examen Físico */}
+                {hasExamen && (
+                    <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                            <Stethoscope className="h-3.5 w-3.5" /> Examen Físico
+                        </h4>
+                        <div className="p-4 rounded-xl bg-card border border-border/70 shadow-2xs space-y-4">
+                            {Object.entries(history.examenFisico!).filter(([k]) => k !== 'otros').length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {Object.entries(history.examenFisico!).filter(([k]) => k !== 'otros').map(([k, v]) => (
+                                        <div key={k} className="p-2.5 rounded-lg bg-muted/40 border border-muted flex flex-col justify-center">
+                                            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{formatLabel(k)}</span>
+                                            <span className={cn("text-sm font-semibold mt-0.5", isNA(v) && "text-muted-foreground/40")}>{String(v)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {history.examenFisico!.otros && (
+                                <div className="space-y-1.5 pt-1 border-t border-muted/50">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                                        {formatLabel('otros')}
+                                    </span>
+                                    <div 
+                                        className="text-sm border-l-2 border-primary/40 pl-3 py-1.5 prose-sm max-w-none text-foreground/90 bg-muted/20 rounded-r-lg" 
+                                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(history.examenFisico!.otros) }} 
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* 4. Diagnósticos */}
+                <DiagnosesList diagnosticos={history.diagnosticos} />
+
+                {/* 5. Plan de Manejo */}
+                <PlanManejoDetail planManejo={history.planManejo} />
+
+                {/* 6. Exámenes Complementarios (PDFs / Imágenes) */}
+                <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                        <Paperclip className="h-4 w-4 text-primary" />
+                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider">
+                            Exámenes Complementarios Adjuntos
+                        </h4>
+                        {allHistoryDocs.length > 0 && (
+                            <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5">
+                                {allHistoryDocs.length}
+                            </Badge>
+                        )}
+                    </div>
+                    <ClinicalHistoryDocumentsManager
+                        documents={allHistoryDocs}
+                        historyId={history.id}
+                        patientId={history.patient?.id}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-8">
+            <div className="grid gap-6 md:grid-cols-2">
+                {activeTemplate.secciones.map((sec: any) => (
+                    <div key={sec.id || sec.titulo} className="space-y-3 p-4 rounded-xl bg-muted/20 border border-muted/50">
+                        <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
+                            {(() => {
+                                const Icon = getSectionIcon(sec.titulo);
+                                return <Icon className="h-4 w-4" />;
+                            })()}
+                            {sec.titulo}
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            {sec.campos.map((campo: any) => {
+                                const val = history.datosEspecificos?.[campo.id];
+                                const isFullWidth = campo.layout === 'full';
+                                
+                                return (
+                                    <div key={campo.id} className={cn("space-y-1", isFullWidth ? "sm:col-span-2" : "sm:col-span-1")}>
+                                        <span className="text-[10px] text-muted-foreground uppercase font-bold">{campo.label}</span>
+                                        {campo.tipo === 'rich-text' ? (
+                                            <div className="text-sm prose-sm border-l-2 border-primary/10 pl-3 py-0.5" dangerouslySetInnerHTML={{ __html: sanitizeHtml(String(val || 'No registrado')) }} />
+                                        ) : (
+                                            <p className="text-sm font-medium">{String(val || 'No registrado')}</p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="space-y-6 border-t border-muted/50 pt-6">
+                <DiagnosesList diagnosticos={history.diagnosticos} />
+                <PlanManejoDetail planManejo={history.planManejo} />
+
+                {/* Exámenes Complementarios (PDFs / Imágenes) */}
+                <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                        <Paperclip className="h-4 w-4 text-primary" />
+                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider">
+                            Exámenes Complementarios Adjuntos
+                        </h4>
+                        {allHistoryDocs.length > 0 && (
+                            <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5">
+                                {allHistoryDocs.length}
+                            </Badge>
+                        )}
+                    </div>
+                    <ClinicalHistoryDocumentsManager
+                        documents={allHistoryDocs}
+                        historyId={history.id}
+                        patientId={history.patient?.id}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function EvolutionNoteDetail({ note, patientId, patientDocuments = [] }: { note: any; patientId?: string; patientDocuments?: any[] }) {
+    const navigate = useNavigate();
+
+    return (
+        <div className="space-y-5">
             <div>
-                <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Estado Subjetivo</h4>
-                <p className="text-sm border-l-2 border-primary/20 pl-4">
+                <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" /> Estado Subjetivo
+                </h4>
+                <p className="text-sm border-l-2 border-primary/40 pl-3 py-1 bg-muted/20 rounded-r-md text-foreground/90 leading-relaxed">
                     {note.estadoSubjetivo}
                 </p>
             </div>
 
             {note.cambiosSintomas && (
                 <div>
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Cambios en Síntomas</h4>
-                    <p className="text-sm border-l-2 border-primary/20 pl-4 italic">
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <Activity className="h-3.5 w-3.5" /> Cambios en Síntomas
+                    </h4>
+                    <p className="text-sm border-l-2 border-primary/40 pl-3 py-1 bg-muted/20 rounded-r-md text-foreground/90 italic leading-relaxed">
                         {note.cambiosSintomas}
                     </p>
                 </div>
             )}
 
             {note.seguimiento && Object.keys(note.seguimiento).length > 0 && (
-                <div>
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Evaluación Objetiva (Examen Físico)</h4>
+                <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                        <Stethoscope className="h-3.5 w-3.5" /> Evaluación Objetiva (Examen Físico)
+                    </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {Object.entries(note.seguimiento).map(([key, value]) => (
-                            <div key={key} className="text-sm flex flex-col p-2 rounded bg-muted/30 border border-muted">
+                            <div key={key} className="text-sm flex flex-col p-2.5 rounded-lg bg-card border border-border/70 shadow-2xs">
                                 <span className="text-[10px] text-muted-foreground uppercase font-bold">{formatLabel(key)}:</span>
-                                <span className="font-medium">{String(value)}</span>
+                                <span className="font-semibold text-foreground mt-0.5">{String(value)}</span>
                             </div>
                         ))}
                     </div>
@@ -402,40 +702,137 @@ function EvolutionNoteDetail({ note }: { note: any }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {note.diagnostico && (
-                    <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
-                        <h4 className="text-[10px] font-bold text-primary uppercase mb-1">Diagnóstico</h4>
-                        <p className="text-sm font-semibold">{note.diagnostico}</p>
+                    <div className="bg-primary/5 p-3.5 rounded-xl border border-primary/15 space-y-1">
+                        <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider">Diagnóstico</h4>
+                        <p className="text-sm font-semibold text-foreground leading-snug break-words">{note.diagnostico}</p>
                     </div>
                 )}
                 {note.tratamientoActual && (
-                    <div className="bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
-                        <h4 className="text-[10px] font-bold text-emerald-500 uppercase mb-1">Tratamiento Actual</h4>
-                        <p className="text-sm font-semibold">{note.tratamientoActual}</p>
+                    <div className="bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/20 space-y-1">
+                        <h4 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Tratamiento Actual</h4>
+                        <p className="text-sm font-semibold text-foreground leading-snug break-words">{note.tratamientoActual}</p>
                     </div>
                 )}
             </div>
 
-            {note.planAjustado && (
-                <div>
-                    <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Plan Ajustado</h4>
-                    <p className="text-sm">
-                        {typeof note.planAjustado === 'string' 
-                            ? note.planAjustado 
-                            : (note.planAjustado?.indicaciones || note.planAjustado?.planManejo || JSON.stringify(note.planAjustado))
-                        }
-                    </p>
-                </div>
-            )}
+            {note.planAjustado && (() => {
+                const parsedPlan = parseJsonIfNeeded(note.planAjustado);
+
+                if (!parsedPlan) return null;
+
+                if (typeof parsedPlan === 'string') {
+                    return (
+                        <div className="space-y-1.5">
+                            <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                <ClipboardList className="h-3.5 w-3.5" /> Plan Ajustado
+                            </h4>
+                            <div className="text-sm p-3.5 rounded-xl bg-card border border-border/70 text-foreground/90 whitespace-pre-wrap leading-relaxed shadow-2xs">
+                                {parsedPlan}
+                            </div>
+                        </div>
+                    );
+                }
+
+                if (typeof parsedPlan === 'object' && parsedPlan !== null) {
+                    const entries = Object.entries(parsedPlan).filter(([_, v]) => !isNA(v));
+                    if (entries.length === 0) return null;
+
+                    return (
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                <ClipboardList className="h-3.5 w-3.5" /> Plan Ajustado
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {entries.map(([k, v]) => {
+                                    const label = formatLabel(k);
+                                    const isMed = k.toLowerCase().includes('medica');
+                                    const isFull = k === 'indicaciones' || isMed || String(v).length > 100;
+                                    return (
+                                        <div
+                                            key={k}
+                                            className={cn(
+                                                "p-3.5 rounded-xl bg-card border border-border/70 shadow-2xs space-y-1.5",
+                                                isFull ? "md:col-span-2" : "md:col-span-1"
+                                            )}
+                                        >
+                                            <span className="text-[11px] font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                                                {isMed ? (
+                                                    <Pill className="h-3.5 w-3.5 text-primary" />
+                                                ) : (
+                                                    <FileText className="h-3.5 w-3.5 text-primary" />
+                                                )}
+                                                {label}
+                                            </span>
+                                            <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                                                {typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                }
+
+                return null;
+            })()}
 
             {note.proximaCita && (
-                <div className="flex items-center gap-2 text-primary font-medium">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-sm">
+                <div className="flex items-center gap-2 text-primary font-medium text-sm p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    <span>
                         Próxima cita programada para el {format(new Date(note.proximaCita), 'PPPP', { locale: es })}
                         {note.horaCita && ` a las ${format(new Date(`2000-01-01T${note.horaCita}`), 'hh:mm b', { locale: es })}`}
                     </span>
                 </div>
             )}
+
+            {/* Documentos adjuntos a la nota */}
+            {(() => {
+                const noteDocs = (note.documents && Array.isArray(note.documents))
+                    ? note.documents.filter((d: any) => d && typeof d === 'object' && !Array.isArray(d) && (d.name || d.url))
+                    : [];
+
+                const patientDocsForNote = (patientDocuments || []).filter(
+                    (d: any) => d && typeof d === 'object' && !Array.isArray(d) && (d.name || d.url) && d.noteId === note.id
+                );
+
+                const merged = [...noteDocs];
+                patientDocsForNote.forEach((pDoc: any) => {
+                    if (!merged.some((d: any) => (d.id && d.id === pDoc.id) || (d.url && d.url === pDoc.url))) {
+                        merged.push(pDoc);
+                    }
+                });
+
+                if (merged.length === 0) return null;
+
+                return (
+                    <div className="space-y-2 border-t border-border/40 pt-4">
+                        <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                            <Paperclip className="h-3.5 w-3.5" /> Exámenes Adjuntos ({merged.length})
+                        </h4>
+                        <ClinicalHistoryDocumentsManager
+                            documents={merged}
+                            noteId={note.id}
+                            historyId={note.clinicalHistory?.id || note.clinicalHistoryId}
+                            patientId={patientId}
+                            readOnly={true}
+                        />
+                    </div>
+                );
+            })()}
+
+            <div className="flex justify-end pt-2 border-t border-border/40">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/clinical-history-note/${note.id}/edit`)}
+                    className="text-xs text-primary border-primary/20 hover:bg-primary/5 shadow-2xs"
+                >
+                    <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                    Editar Nota de Evolución
+                </Button>
+            </div>
         </div>
     );
 }

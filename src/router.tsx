@@ -13,6 +13,7 @@ import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RouteErrorPage } from '@/pages/RouteErrorPage';
+import { MaintenancePage } from '@/pages/MaintenancePage';
 import DoctorSetupPage from '@/features/admin/pages/DoctorSetupPage';
 
 // Patients
@@ -35,7 +36,11 @@ import { ClinicalHistoryNoteListPage } from '@/features/clinical-history/pages/C
 import { ClinicalHistoryNoteFormPage } from '@/features/clinical-history/pages/ClinicalHistoryNoteFormPage';
 import { ClinicalHistoryNoteDetailPage } from '@/features/clinical-history/pages/ClinicalHistoryNoteDetailPage';
 
+// Consultas y Chequeos Diarios
+import { ConsultasPage } from '@/features/consultas/pages/ConsultasPage';
+
 // Settings
+import { SettingsPage } from '@/features/admin/pages/SettingsPage';
 import { SchedulePage } from '@/features/admin/pages/SchedulePage';
 import { ConsultingRoomsPage } from '@/features/admin/pages/ConsultingRoomsPage';
 import { SpecialtyTemplatesPage } from '@/features/admin/pages/SpecialtyTemplatesPage';
@@ -45,15 +50,17 @@ import AuditoriaPage from '@/features/admin/pages/AuditoriaPage';
 import GeneralReportsPage from '@/features/general-reports/pages/GeneralReportsPage';
 import AlertsAdminPage from '@/features/alerts/pages/AlertsAdminPage';
 
+import { SecuritySetupPage } from '@/features/auth/pages/SecuritySetupPage';
+
 export const router = createBrowserRouter([
     // Rutas públicas (Auth)
     {
         element: <AuthLayout />,
         children: [
             { path: '/login', element: <LoginPage /> },
-            { path: '/register', element: <RegisterPage /> },
             { path: '/forgot-password', element: <ForgotPasswordPage /> },
             { path: '/reset-password/:token', element: <ResetPasswordPage /> },
+            { path: '/maintenance', element: <MaintenancePage /> },
         ],
     },
 
@@ -62,6 +69,7 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         errorElement: <RouteErrorPage />,
         children: [
+            { path: '/security-setup', element: <SecuritySetupPage /> },
             {
                 element: <MainLayout />,
                 children: [
@@ -82,22 +90,31 @@ export const router = createBrowserRouter([
                     { path: '/appointments/new', element: <AppointmentFormPage /> },
                     { path: '/appointments/:id/edit', element: <AppointmentFormPage /> },
 
-                    // Historias Clínicas y Notas de Evolución (Solo DOCTOR / ADMIN / MEDICAL_DIRECTOR)
+                    // Historias Clínicas y Notas de Evolución (Visualización: Todo personal clínico/admin/secretaria)
                     {
-                        element: <RoleGuard roles={[OrganizationRole.DOCTOR, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, OrganizationRole.OWNER, SystemRole.SUPERADMIN]} />,
+                        element: <RoleGuard roles={[OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, OrganizationRole.ADMIN, OrganizationRole.OWNER, OrganizationRole.SECRETARY, SystemRole.SUPERADMIN]} />,
                         children: [
                             { path: '/clinical-history', element: <ClinicalHistoryListPage /> },
-                            { path: '/clinical-history/new', element: <ClinicalHistoryFormPage /> },
                             { path: '/clinical-history/:id', element: <ClinicalHistoryDetailPage /> },
-                            // Notas de evolución (requieren el mismo nivel de acceso que las historias clínicas)
-                            { path: '/clinical-history/notes/new', element: <NoteFormPage /> },
                             { path: '/clinical-history-note', element: <ClinicalHistoryNoteListPage /> },
-                            { path: '/clinical-history-note/new', element: <ClinicalHistoryNoteFormPage /> },
                             { path: '/clinical-history-note/:id', element: <ClinicalHistoryNoteDetailPage /> },
+                            { path: '/consultas', element: <ConsultasPage /> },
+                        ],
+                    },
+                    // Creación/Edición Clínica (Doctores, Enfermeras/os, Directores y Superadmin)
+                    {
+                        element: <RoleGuard roles={[OrganizationRole.DOCTOR, OrganizationRole.NURSE, OrganizationRole.MEDICAL_DIRECTOR, SystemRole.SUPERADMIN]} />,
+                        children: [
+                            { path: '/clinical-history/new', element: <ClinicalHistoryFormPage /> },
+                            { path: '/clinical-history/:id/edit', element: <ClinicalHistoryFormPage /> },
+                            { path: '/clinical-history/notes/new', element: <NoteFormPage /> },
+                            { path: '/clinical-history-note/new', element: <ClinicalHistoryNoteFormPage /> },
+                            { path: '/clinical-history-note/:id/edit', element: <ClinicalHistoryNoteFormPage /> },
                         ],
                     },
 
                     // Configuración
+                    { path: '/settings', element: <SettingsPage /> },
                     { path: '/settings/schedule', element: <SchedulePage /> },
                     { path: '/settings/rooms', element: <ConsultingRoomsPage /> },
                     { path: '/settings/templates', element: <SpecialtyTemplatesPage /> },
@@ -120,4 +137,5 @@ export const router = createBrowserRouter([
             },
         ],
     },
-]);
+], { basename: '/historias-clinicas' });
+

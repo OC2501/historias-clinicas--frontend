@@ -44,75 +44,77 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-slate-850: #131d2e;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #F9F8F3; /* Fondo lino/crema premium y suave */
-  --foreground: #262C3A; /* Texto azul marino oscuro */
-  --card: #FFFFFF; /* Tarjetas en blanco puro */
-  --card-foreground: #262C3A;
-  --popover: #FFFFFF;
-  --popover-foreground: #262C3A;
-  --primary: #262C3A; /* Acciones principales en azul marino oscuro */
-  --primary-foreground: #FFFFFF;
-  --secondary: #F4EFE0; /* Fondo crema secundario */
-  --secondary-foreground: #262C3A;
-  --muted: #F4EFE0;
-  --muted-foreground: #6E768A;
-  --accent: #262C3A; /* Destaques también en el mismo azul marino oscuro */
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --border: #EBE8DC; /* Bordes cálidos */
-  --input: #EBE8DC;
-  --ring: #262C3A;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: #262C3A; /* Barra lateral en azul marino */
-  --sidebar-foreground: #A6B0C3;
-  --sidebar-primary: #FFFFFF; /* Elemento activo en blanco para máximo contraste */
-  --sidebar-primary-foreground: #262C3A; /* Texto del elemento activo en azul marino */
-  --sidebar-accent: #333B4E;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #333B4E;
-  --sidebar-ring: #262C3A;
+    /* Paleta Institucional: #1a5f9c (Primary) y #eaebed (Background) */
+    --background: #eaebed;
+    --foreground: #1a1c1e;
+    --card: #ffffff;
+    --card-foreground: #1a1c1e;
+    --popover: #ffffff;
+    --popover-foreground: #1a1c1e;
+    --primary: #1a5f9c;
+    --primary-foreground: #ffffff;
+    --secondary: #e2e8f0;
+    --secondary-foreground: #1a5f9c;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f1f5f9;
+    --accent-foreground: #1a5f9c;
+    --destructive: #ef4444;
+    --border: #cbd5e1;
+    --input: #cbd5e1;
+    --ring: #1a5f9c;
+    --radius: 0.75rem;
+    --chart-1: #1a5f9c;
+    --chart-2: #0284c7;
+    --chart-3: #10b981;
+    --chart-4: #f59e0b;
+    --chart-5: #8b5cf6;
+    --sidebar: #1a5f9c;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #ffffff;
+    --sidebar-primary-foreground: #1a5f9c;
+    --sidebar-accent: #154c7d;
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: #154c7d;
+    --sidebar-ring: #1a5f9c;
 }
 
 .dark {
-  --background: #1c212c; /* Versión más oscura de #262C3A */
-  --foreground: #FFFFFF;
-  --card: #262C3A; /* El color azul marino principal */
-  --card-foreground: #FFFFFF;
-  --popover: #262C3A;
-  --popover-foreground: #FFFFFF;
-  --primary: #FFFFFF; /* Blanco en modo oscuro para resaltar sobre el fondo marino */
-  --primary-foreground: #262C3A;
-  --secondary: #262C3A;
-  --secondary-foreground: #FFFFFF;
-  --muted: #353c4d;
-  --muted-foreground: #94a3b8;
-  --accent: #FFFFFF;
-  --accent-foreground: #262C3A;
-  --destructive: #7f1d1d;
-  --border: #353c4d;
-  --input: #353c4d;
-  --ring: #FFFFFF;
-  --sidebar: #262C3A;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #FFFFFF;
-  --sidebar-primary-foreground: #262C3A;
-  --sidebar-accent: #353c4d;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #353c4d;
-  --sidebar-ring: #FFFFFF;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --popover: #1e293b;
+    --popover-foreground: #f8fafc;
+    --primary: #1a5f9c;
+    --primary-foreground: #ffffff;
+    --secondary: #334155;
+    --secondary-foreground: #f8fafc;
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
+    --accent: #334155;
+    --accent-foreground: #f8fafc;
+    --destructive: #f87171;
+    --border: #334155;
+    --input: #334155;
+    --ring: #1a5f9c;
+    --chart-1: #38bdf8;
+    --chart-2: #34d399;
+    --chart-3: #fbbf24;
+    --chart-4: #a78bfa;
+    --chart-5: #f472b6;
+    --sidebar: #0f172a;
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #1a5f9c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1e293b;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: #334155;
+    --sidebar-ring: #1a5f9c;
 }
 
 @layer base {
@@ -120,8 +122,30 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    height: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
-    @apply bg-background text-foreground m-0 p-0 overflow-hidden font-sans;
+    @apply bg-background text-foreground m-0 p-0;
+    height: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  #root {
+    height: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    width: 100%;
+    overflow: hidden;
   }
 
   /* Custom Scrollbar Styles */

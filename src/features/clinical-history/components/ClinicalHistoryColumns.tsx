@@ -1,6 +1,6 @@
-import { format } from 'date-fns';
-import { Eye, FileText, MoreHorizontal, Printer } from 'lucide-react';
+import { Eye, FileText, MoreHorizontal, Printer, Pencil } from 'lucide-react';
 import type { ClinicalHistory } from '@/types';
+import { safeFormat } from '@/lib/utils';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,7 +19,7 @@ export const getClinicalHistoryColumns = (
 ): Column<ClinicalHistory>[] => [
     {
         header: 'Fecha',
-        accessorKey: (history) => history?.fecha ? format(new Date(history.fecha), 'dd/MM/yyyy') : 'S/F',
+        accessorKey: (history) => safeFormat(history?.fecha, 'dd/MM/yyyy', 'S/F'),
     },
     {
         header: 'Paciente',
@@ -60,7 +60,14 @@ export const getClinicalHistoryColumns = (
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/clinical-history/notes/new?historyId=${history.id}`);
+                        navigate(`/clinical-history/${history.id}/edit`);
+                    }}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar Historia
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/clinical-history-note/new?historyId=${history.id}`);
                     }}>
                         <FileText className="mr-2 h-4 w-4" />
                         Nueva Nota

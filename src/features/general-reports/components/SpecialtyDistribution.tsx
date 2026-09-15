@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Label, Pie, PieChart, Tooltip } from "recharts"
+import { Cell, Label, Pie, PieChart, Tooltip } from "recharts"
 
 import {
   Card,
@@ -19,13 +19,18 @@ import type { SpecialtyDistribution } from "../types/reports.types"
 import { ChartLegend, type LegendItem } from "./ChartLegend"
 import { CustomPercentTooltip } from "./CustomPercentTooltip"
 
-// Colores modernos para especialidades
+// Paleta moderna y armoniosa para especialidades
 const COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
+  "#1a5f9c", // Azul institucional Hidroven
+  "#0284c7", // Sky blue
+  "#10b981", // Emerald green
+  "#f59e0b", // Amber
+  "#8b5cf6", // Violet
+  "#ec4899", // Rose
+  "#06b6d4", // Cyan
+  "#f97316", // Orange
+  "#14b8a6", // Teal
+  "#6366f1", // Indigo
 ];
 
 interface SpecialtyChartProps {
@@ -52,7 +57,8 @@ export function SpecialtyDistributionChart({ data = [] }: SpecialtyChartProps) {
       count: { label: "Consultas" }
     };
     data.forEach((item, index) => {
-      config[item.specialty] = {
+      const safeKey = item.specialty.toLowerCase().replace(/[^a-z0-9_-]/gi, "_");
+      config[safeKey] = {
         label: item.specialty,
         color: COLORS[index % COLORS.length]
       };
@@ -71,7 +77,7 @@ export function SpecialtyDistributionChart({ data = [] }: SpecialtyChartProps) {
       <CardHeader className="items-center pb-4 border-b border-border/50">
         <div className="space-y-1 text-center">
           <CardTitle className="text-xl font-bold tracking-tight">Carga por Especialidad</CardTitle>
-          <CardDescription>Distribución de historias por área</CardDescription>
+          <CardDescription>Distribución de atenciones médicas por área</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="flex-1 pb-2 pt-6">
@@ -91,6 +97,13 @@ export function SpecialtyDistributionChart({ data = [] }: SpecialtyChartProps) {
               stroke="none"
               paddingAngle={5}
             >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.fill}
+                  className="hover:opacity-80 transition-opacity duration-300 cursor-pointer"
+                />
+              ))}
               <Label
                 content={({ viewBox }) => {
                   if (viewBox && "cx" in viewBox && "cy" in viewBox) {
@@ -113,7 +126,7 @@ export function SpecialtyDistributionChart({ data = [] }: SpecialtyChartProps) {
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground text-xs"
                         >
-                          Consultas
+                          Atenciones
                         </tspan>
                       </text>
                     )

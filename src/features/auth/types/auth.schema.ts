@@ -2,7 +2,7 @@ import * as z from 'zod';
 import { OrganizationPlanType, OrganizationRole } from '@/types/enums';
 
 export const loginSchema = z.object({
-    email: z.string().email({ message: 'Email inválido' }),
+    email: z.string().min(3, { message: 'Ingrese su email o nombre de usuario' }),
     password: z.string().min(6, { message: 'La contraseña debe tener al menos 6 caracteres' }),
 });
 

@@ -67,8 +67,8 @@ export function AppointmentStatsChart({ data }: AppointmentStatsChartProps) {
             <p className="font-semibold text-sm">No hay citas en este periodo</p>
           </div>
         ) : (
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[350px] w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Tooltip content={<CustomPercentTooltip total={total} />} />
                 <Pie

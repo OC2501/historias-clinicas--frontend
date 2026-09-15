@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Stethoscope, ShieldCheck, Activity, HeartPulse } from 'lucide-react';
+import { Loader2, Stethoscope, ShieldCheck, Activity, HeartPulse, Droplet } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAuthStore } from '@/store/auth.store';
 import { OrganizationRole, SystemRole } from '@/types';
@@ -53,48 +53,76 @@ export function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col lg:flex-row bg-background font-sans overflow-hidden">
-            {/* Left Side: Form */}
-            <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-24 py-10 bg-white animate-in fade-in slide-in-from-left-4 duration-700">
-                <div className="max-w-md w-full mx-auto space-y-8">
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-primary/10 p-2 rounded-xl">
-                                <Stethoscope className="h-6 w-6 text-primary" />
-                            </div>
-                            <span className="text-xl font-black tracking-tight text-primary">
-                                MC Portal Clínico
-                            </span>
+            <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#eaebed] font-sans overflow-y-auto lg:overflow-hidden">
+                {/* Left Side: Institutional Blue Banner */}
+                <div className="hidden lg:flex lg:w-1/2 bg-[#1a5f9c] text-white p-8 sm:p-12 lg:p-20 flex-col justify-between relative overflow-hidden shrink-0 animate-in fade-in duration-700">
+                    <div className="relative z-10 space-y-8 my-auto max-w-lg">
+                        {/* Icon Header */}
+                        <div className="inline-flex p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md">
+                            <Stethoscope className="h-8 w-8 text-white" />
                         </div>
-                        <h1 className="text-3xl font-extrabold tracking-tight text-primary">
-                            Iniciar Sesión
-                        </h1>
-                        <p className="text-muted-foreground text-base">
-                            Acceda a su plataforma de gestión médica personalizada.
+
+                        {/* Title */}
+                        <div className="space-y-4">
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                                Portal Clínico <br />
+                                Hidroven-Falcón.
+                            </h1>
+                            <p className="text-white/80 text-base sm:text-lg leading-relaxed font-normal max-w-md">
+                                Control total sobre historias clínicas, citas, pacientes y consultas en una plataforma diseñada para la eficiencia médica.
+                            </p>
+                        </div>
+
+                        {/* Footer Tag */}
+                        <div className="pt-6 border-t border-white/20">
+                            <p className="text-xs uppercase tracking-widest font-semibold text-white/60">
+                                MINAGUAS / HIDROVEN-FALCÓN
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Subtle Background Pattern / Glow */}
+                    <div className="absolute -top-32 -right-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-black/10 rounded-full blur-3xl pointer-events-none" />
+                </div>
+
+                {/* Right Side: Form Panel */}
+                <div className="flex-1 flex flex-col justify-start lg:justify-center items-center p-4 sm:p-10 lg:p-16 bg-[#eaebed] overflow-y-auto min-h-0 animate-in fade-in slide-in-from-right-4 duration-700">
+                    <div className="w-full max-w-md space-y-4 sm:space-y-6 text-center mb-4 sm:mb-6 my-auto">
+                        {/* Stethoscope Logo (Only on Mobile/Tablet) */}
+                        <div className="lg:hidden mx-auto inline-flex p-3 sm:p-4 rounded-2xl bg-[#1a5f9c] text-white shadow-md mb-2">
+                            <Stethoscope className="h-7 w-7 sm:h-8 sm:w-8" />
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1a1c1e] tracking-tight">
+                            Bienvenido de nuevo
+                        </h2>
+                        <p className="text-slate-500 text-xs sm:text-sm">
+                            Ingresa tus credenciales para acceder al sistema
                         </p>
                     </div>
 
-                    {error && (
-                        <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive font-medium animate-in slide-in-from-top-2">
-                            {error}
-                        </div>
-                    )}
+                    {/* Main Card */}
+                    <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-10 shadow-xl border border-slate-200/80 space-y-5 sm:space-y-6">
+                        {error && (
+                            <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-xs text-red-600 font-medium text-left">
+                                {error}
+                            </div>
+                        )}
 
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                            <div className="space-y-4">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 text-left">
                                 <FormField
                                     control={form.control}
                                     name="email"
                                     render={({ field }) => (
-                                        <FormItem className="space-y-1.5">
-                                            <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Correo Electrónico
+                                        <FormItem className="space-y-2">
+                                            <FormLabel className="text-xs font-bold text-slate-700">
+                                                Usuario / Correo
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="doctor@ejemplo.com"
-                                                    className="h-12 border-muted/30 bg-muted/5 focus:bg-white focus:ring-2 focus:ring-primary/10 transition-all rounded-xl text-sm"
+                                                    placeholder="doctor@ejemplo.com o usuario"
+                                                    className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[#1a5f9c]/20 rounded-xl text-sm transition-all"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -102,19 +130,28 @@ export function LoginPage() {
                                         </FormItem>
                                     )}
                                 />
+
                                 <FormField
                                     control={form.control}
                                     name="password"
                                     render={({ field }) => (
-                                        <FormItem className="space-y-1.5">
-                                            <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Contraseña
-                                            </FormLabel>
+                                        <FormItem className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <FormLabel className="text-xs font-bold text-slate-700">
+                                                    Contraseña
+                                                </FormLabel>
+                                                <Link
+                                                    to="/forgot-password"
+                                                    className="text-xs font-semibold text-[#1a5f9c] hover:underline"
+                                                >
+                                                    ¿Olvidaste tu clave?
+                                                </Link>
+                                            </div>
                                             <FormControl>
                                                 <Input
                                                     type="password"
                                                     placeholder="••••••••"
-                                                    className="h-12 border-muted/30 bg-muted/5 focus:bg-white focus:ring-2 focus:ring-primary/10 transition-all rounded-xl text-sm"
+                                                    className="h-11 border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[#1a5f9c]/20 rounded-xl text-sm transition-all"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -122,102 +159,30 @@ export function LoginPage() {
                                         </FormItem>
                                     )}
                                 />
-                            </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="remember" className="rounded-md border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
-                                    <label
-                                        htmlFor="remember"
-                                        className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
-                                    >
-                                        Recordarme
-                                    </label>
-                                </div>
-                                <Link
-                                    to="/forgot-password"
-                                    className="text-xs font-bold text-primary hover:underline underline-offset-4"
+                                <Button
+                                    type="submit"
+                                    className="w-full h-12 font-bold text-sm bg-[#1a5f9c] hover:bg-[#154c7d] text-white rounded-xl shadow-md transition-all active:scale-[0.98] mt-2"
+                                    disabled={isLoading}
                                 >
-                                    ¿Olvidó su contraseña?
-                                </Link>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="w-full h-12 font-extrabold text-base rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="mr-3 h-4 w-4 animate-spin" />
-                                        Procesando...
-                                    </>
-                                ) : 'Ingresar al Portal'}
-                            </Button>
-                        </form>
-                    </Form>
-
-                    <div className="pt-4 border-t border-muted/20 text-center">
-                        <p className="text-muted-foreground text-sm">
-                            ¿No tiene una cuenta?{' '}
-                            <Link to="/register" className="text-primary hover:underline font-extrabold decoration-2 underline-offset-4">
-                                Regístrese aquí
-                            </Link>
-                        </p>
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Accediendo...
+                                        </>
+                                    ) : (
+                                        'Acceder al Panel'
+                                    )}
+                                </Button>
+                            </form>
+                        </Form>
                     </div>
+
+                    {/* Footer Copyright */}
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mt-8">
+                        © 2026 HIDROVEN-FALCÓN • V1.0.0
+                    </p>
                 </div>
             </div>
-
-            {/* Right Side: Visual Branding */}
-            <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-primary">
-                {/* Background Pattern / Illustration */}
-                <div className="absolute inset-0 z-0">
-                    <img
-                        src="/img/medical_login.png"
-                        alt="Medical Illustration"
-                        className="w-full h-full object-cover opacity-50 scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-transparent" />
-                </div>
-
-                {/* Glassmorphism Cards */}
-                <div className="relative z-10 w-full flex flex-col p-12 lg:p-16 justify-between h-full animate-in fade-in zoom-in duration-1000">
-                    <div className="space-y-3">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold tracking-widest uppercase">
-                            <Activity className="h-3.5 w-3.5 text-emerald-400" />
-                            Tecnología Médica de Vanguardia
-                        </div>
-                        <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight">
-                            Bienvenido a <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">MC Portal Clínico</span>
-                        </h2>
-                        <p className="text-lg lg:text-xl text-white/70 max-w-md leading-relaxed font-light">
-                            Gestión inteligente y automatizada diseñada para los mejores centros de salud.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 pb-8">
-                        {[
-                            { icon: HeartPulse, label: 'Precisión Clínica', desc: 'Diagnósticos asistidos' },
-                            { icon: ShieldCheck, label: 'Seguridad Total', desc: 'Datos encriptados' }
-                        ].map((item, i) => (
-                            <div key={i} className="p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 space-y-2.5 hover:bg-white/20 transition-all duration-300">
-                                <div className="p-2 rounded-xl bg-white/20 w-fit">
-                                    <item.icon className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <h4 className="text-white text-sm font-bold">{item.label}</h4>
-                                    <p className="text-white/50 text-[10px] italic">{item.desc}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Animated Light Blobs */}
-                <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/5 rounded-full blur-[100px] animate-pulse delay-1000" />
-            </div>
-        </div>
-    );
-}
+        );
+    }

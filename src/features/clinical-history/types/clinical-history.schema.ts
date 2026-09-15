@@ -4,9 +4,9 @@ export const clinicalHistorySchema = z.object({
     patientId: z.string().min(1, 'Seleccione un paciente'),
     doctorId: z.string().min(1, 'Seleccione un médico'),
     specialty: z.string().min(1, 'Seleccione una especialidad'),
-    motivoConsulta: z.string().min(10, 'El motivo debe tener al menos 10 caracteres'),
-    enfermedadActual: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
-    diagnosticos: z.array(z.string()).min(1, 'Agregue al menos un diagnóstico'),
+    motivoConsulta: z.string().optional().or(z.literal('')),
+    enfermedadActual: z.string().optional().or(z.literal('')),
+    diagnosticos: z.array(z.string()).optional(),
 
     // Antecedentes Personales
     antecedentesPersonales: z.string().optional(),

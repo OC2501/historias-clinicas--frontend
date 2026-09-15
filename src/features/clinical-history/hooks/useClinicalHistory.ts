@@ -32,7 +32,12 @@ export function useClinicalHistory() {
         queryFn: () => doctorsApi.getAll(),
     });
 
-    const doctors = useMemo(() => doctorsRes?.data?.data || [], [doctorsRes]);
+    const doctors = useMemo(() => {
+        const raw = doctorsRes?.data;
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray((raw as any)?.data)) return (raw as any).data;
+        return [];
+    }, [doctorsRes]);
     const history = useMemo(() => {
         const rawHistory = historyRes?.data;
         if (!rawHistory) return null;

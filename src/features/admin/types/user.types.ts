@@ -13,6 +13,7 @@ export interface Organization {
 export interface User {
     id: string;
     email: string;
+    username?: string;
     name: string;
     systemRole: SystemRole;
     organizationRole?: OrganizationRole;
@@ -21,14 +22,22 @@ export interface User {
     createdAt: string;
     updatedAt: string;
     doctorProfile?: Doctor;
+    securityQuestion1?: string;
+    securityQuestion2?: string;
 }
 
 export interface CreateUserRequest {
     email: string;
+    username?: string;
     password?: string;
     name: string;
     systemRole: SystemRole;
     organizationRole?: OrganizationRole;
 }
 
-export type UpdateUserRequest = Partial<CreateUserRequest>;
+export interface UpdateUserRequest extends Partial<CreateUserRequest> {
+    securityQuestion1?: string;
+    securityAnswer1?: string;
+    securityQuestion2?: string;
+    securityAnswer2?: string;
+}

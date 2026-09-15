@@ -6,9 +6,15 @@ import {
   Filter,
   Calendar as CalendarIcon,
   Shield,
+  Download,
+  Loader2,
+  FileSpreadsheet
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { pdf } from '@react-pdf/renderer';
+import { AuditoriasReportPDF } from '@/features/auditoria/pdf/AuditoriasReportPDF';
+import { exportAuditoriasToExcel } from '@/features/auditoria/reports/AuditoriasExcel';
 
 interface Auditoria {
   id: string;
@@ -26,10 +32,13 @@ interface Auditoria {
 
 import { DataTable } from '@/components/tables/DataTable';
 import type { Column } from '@/types/table';
+import { Button } from '@/components/ui/button';
 
 const AuditoriaPage: React.FC = () => {
   const [logs, setLogs] = useState<Auditoria[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<string | null>(null);
 
@@ -52,6 +61,51 @@ const AuditoriaPage: React.FC = () => {
       console.error('Error fetching audit logs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getFilteredAllLogs = async () => {
+    const response = await getAuditorias({ page: 1, limit: 10000 });
+    const allLogs = response.data || response;
+    return allLogs.filter((log: Auditoria) => {
+      const matchesSearch = searchTerm === '' ||
+        log.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.usuario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.entidad.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesAction = actionFilter === null || log.accion === actionFilter;
+
+      return matchesSearch && matchesAction;
+    });
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const filtered = await getFilteredAllLogs();
+      const blob = await pdf(<AuditoriasReportPDF logs={filtered} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_Auditoria_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true);
+    try {
+      const filtered = await getFilteredAllLogs();
+      await exportAuditoriasToExcel(filtered, 'Reporte_Auditoria');
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+    } finally {
+      setIsExportingExcel(false);
     }
   };
 
@@ -130,21 +184,51 @@ const AuditoriaPage: React.FC = () => {
   });
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Shield className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2 sm:gap-2.5">
+            <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-primary shrink-0" />
             Centro de Auditoría
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
             Monitoreo y trazabilidad de acciones críticas en la organización.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground bg-card px-4 py-2 rounded-xl border shadow-sm">
-          <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
-          Sistema en tiempo real
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <Button
+              variant="outline"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel || loading || !logs || logs.length === 0}
+              className="text-xs sm:text-sm text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900 h-9 sm:h-10"
+            >
+              {isExportingExcel ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+              )}
+              {isExportingExcel ? 'Exportando...' : 'Exportar Excel'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExportPDF}
+              disabled={isExporting || loading || !logs || logs.length === 0}
+              className="text-xs sm:text-sm h-9 sm:h-10"
+            >
+              {isExporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              {isExporting ? 'Exportando...' : 'Exportar PDF'}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-muted-foreground bg-card px-3 sm:px-4 py-2 rounded-xl border shadow-xs justify-center">
+            <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 animate-pulse shrink-0" />
+            Sistema en tiempo real
+          </div>
         </div>
       </div>
 
@@ -173,8 +257,8 @@ const AuditoriaPage: React.FC = () => {
                 <button
                   onClick={() => setActionFilter(actionFilter === 'CREATE' ? null : 'CREATE')}
                   className={`px-3 py-2 rounded-lg transition-colors font-medium ${actionFilter === 'CREATE'
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                     }`}
                 >
                   Solo Creaciones
@@ -182,8 +266,8 @@ const AuditoriaPage: React.FC = () => {
                 <button
                   onClick={() => setActionFilter(actionFilter === 'DELETE' ? null : 'DELETE')}
                   className={`px-3 py-2 rounded-lg transition-colors font-medium ${actionFilter === 'DELETE'
-                      ? 'bg-rose-500 text-white'
-                      : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
                     }`}
                 >
                   Solo Eliminaciones
@@ -191,8 +275,8 @@ const AuditoriaPage: React.FC = () => {
                 <button
                   onClick={() => setActionFilter(actionFilter === 'UPDATE' ? null : 'UPDATE')}
                   className={`px-3 py-2 rounded-lg transition-colors font-medium col-span-2 ${actionFilter === 'UPDATE'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
                     }`}
                 >
                   Solo Actualizaciones
@@ -208,22 +292,22 @@ const AuditoriaPage: React.FC = () => {
           </div>
 
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-[#303854] to-[#4c5a85] p-6 rounded-2xl text-white shadow-xl shadow-primary/10 border border-white/5 transition-all duration-500 hover:shadow-2xl hover:shadow-[#303854]/30 hover:-translate-y-1">
+          <div className="hidden md:block group relative overflow-hidden bg-gradient-to-br from-[#303854] to-[#4c5a85] p-6 rounded-2xl text-white shadow-xl shadow-primary/10 border border-white/5 transition-all duration-500 hover:shadow-2xl hover:shadow-[#303854]/30 hover:-translate-y-1">
             {/* Decorative element */}
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-all duration-700" />
-            
+
             <div className="relative flex flex-col gap-4">
               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
                 <Shield className="w-6 h-6 text-white" />
               </div>
-              
+
               <div>
                 <h4 className="font-bold text-xl mb-2 tracking-tight">Seguridad activa</h4>
                 <p className="text-white/80 text-sm leading-relaxed font-medium">
                   Todos los cambios en pacientes, citas e historias clínicas son registrados permanentemente para garantizar el cumplimiento y la seguridad de los datos.
                 </p>
               </div>
-              
+
               <div className="pt-2 flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-white/40">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Protección Certificada
@@ -237,6 +321,50 @@ const AuditoriaPage: React.FC = () => {
             columns={columns}
             data={filteredLogs}
             isLoading={loading}
+            renderMobileCard={(log) => (
+              <div className="rounded-2xl border bg-card p-4 shadow-xs hover:shadow-md transition-all space-y-3">
+                {/* Cabecera de la tarjeta: Usuario + Acción */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                      {log.usuario?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {log.usuario?.name || 'Usuario desconocido'}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {log.usuario?.email || ''}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${getActionColor(log.accion)}`}>
+                    {log.accion}
+                  </span>
+                </div>
+
+                {/* Descripción / Detalle */}
+                <div className="p-3 bg-muted/40 rounded-xl border border-muted/60">
+                  <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed italic">
+                    "{log.descripcion}"
+                  </p>
+                </div>
+
+                {/* Pie: Entidad afectada + Fecha y hora */}
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-muted/40">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">Entidad:</span>
+                    <span className="px-2 py-0.5 rounded-md bg-primary/5 text-primary text-[11px] font-semibold border border-primary/10">
+                      {log.entidad}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                    <CalendarIcon className="w-3.5 h-3.5 opacity-70" />
+                    <span>{format(new Date(log.createdAt), 'dd MMM, HH:mm', { locale: es })}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             pagination={meta ? {
               currentPage: page,
               totalPages: meta.lastPage,

@@ -17,6 +17,7 @@ interface DataTableProps<T> {
     isLoading?: boolean;
     onRowClick?: (item: T) => void;
     className?: string;
+    renderMobileCard?: (item: T) => React.ReactNode;
     // Paginación
     pagination?: {
         currentPage: number;
@@ -25,6 +26,7 @@ interface DataTableProps<T> {
         totalItems: number;
         onPageChange: (page: number) => void;
         onPageSizeChange: (size: number) => void;
+        pageSizeOptions?: number[];
     };
 }
 
@@ -34,6 +36,7 @@ export function DataTable<T extends { id: string | number }>({
     isLoading,
     onRowClick,
     className,
+    renderMobileCard,
     pagination
 }: DataTableProps<T>) {
     if (isLoading) {
@@ -124,38 +127,44 @@ export function DataTable<T extends { id: string | number }>({
             </div>
 
             {/* Mobile View - Vertical Cards */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-3">
                 {data.length > 0 ? (
                     data.map((item) => (
-                        <div
-                            key={item.id}
-                            onClick={() => onRowClick?.(item)}
-                            className={cn(
-                                "group rounded-xl border bg-card p-4 shadow-sm active:scale-[0.98] transition-all",
-                                onRowClick ? "cursor-pointer hover:border-primary/50" : ""
-                            )}
-                        >
-                            <div className="space-y-3">
+                        renderMobileCard ? (
+                            <div
+                                key={item.id}
+                                onClick={() => onRowClick?.(item)}
+                                className={onRowClick ? "cursor-pointer active:scale-[0.98] transition-all" : ""}
+                            >
+                                {renderMobileCard(item)}
+                            </div>
+                        ) : (
+                            <div
+                                key={item.id}
+                                onClick={() => onRowClick?.(item)}
+                                className={cn(
+                                    "group rounded-xl border bg-card p-4 shadow-xs active:scale-[0.98] transition-all space-y-3",
+                                    onRowClick ? "cursor-pointer hover:border-primary/50" : ""
+                                )}
+                            >
                                 {columns.map((col, i) => {
-                                    // Don't show "Acciones" in the main vertical list if it's the last one
-                                    // or handle it specially. For now, show all.
                                     const value = typeof col.accessorKey === 'function'
                                         ? col.accessorKey(item)
                                         : (item[col.accessorKey as keyof T] as React.ReactNode);
 
                                     return (
-                                        <div key={i} className="flex justify-between items-start gap-4">
-                                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-1">
+                                        <div key={i} className="flex justify-between items-start gap-3 text-xs min-w-0">
+                                            <span className="font-semibold uppercase tracking-wider text-muted-foreground shrink-0 max-w-[42%] break-words pt-0.5">
                                                 {col.header}
                                             </span>
-                                            <div className="text-sm font-medium text-right">
+                                            <div className="font-medium text-foreground min-w-0 text-right flex-1 flex justify-end [&>*]:min-w-0 [&>*]:max-w-full">
                                                 {value}
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                        </div>
+                        )
                     ))
                 ) : (
                     <div className="flex items-center justify-center rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-muted/20">
@@ -172,6 +181,7 @@ export function DataTable<T extends { id: string | number }>({
                     totalItems={pagination.totalItems}
                     onPageChange={pagination.onPageChange}
                     onPageSizeChange={pagination.onPageSizeChange}
+                    pageSizeOptions={pagination.pageSizeOptions}
                 />
             )}
         </div>

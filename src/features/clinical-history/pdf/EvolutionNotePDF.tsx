@@ -1,6 +1,8 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { LOGO_MINAGUAS, LOGO_HIDROVEN } from '@/assets/logos';
+import { safeParseDate } from '@/lib/utils';
 
 const styles = StyleSheet.create({
     page: {
@@ -10,28 +12,46 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: '#333333',
     },
-    header: {
-        backgroundColor: '#1e293b',
-        padding: 20,
-        marginBottom: 20,
-        borderRadius: 4,
+    headerContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        borderBottomWidth: 2,
+        borderBottomColor: '#1e293b',
+        paddingBottom: 10,
+        marginBottom: 15,
     },
-    headerTitle: {
-        color: '#FFFFFF',
-        fontSize: 18,
+    logoMinAguas: {
+        width: 120,
+        height: 35,
+        objectFit: 'contain',
+    },
+    logoHidroven: {
+        width: 60,
+        height: 35,
+        objectFit: 'contain',
+    },
+    headerTextContainer: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    institutionTitle: {
+        fontSize: 10,
         fontWeight: 'bold',
+        color: '#1e293b',
+        textAlign: 'center',
+    },
+    reportTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#1a5f9c',
+        marginTop: 4,
+        textAlign: 'center',
     },
     headerSubtitle: {
         color: '#94a3b8',
-        fontSize: 10,
+        fontSize: 9,
         marginTop: 2,
-    },
-    headerDate: {
-        color: '#cbd5e1',
-        fontSize: 10,
     },
     section: {
         marginBottom: 15,
@@ -125,7 +145,7 @@ interface EvolutionNotePDFProps {
 }
 
 export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguimiento, planAjustado: propPlanAjustado, patient }: EvolutionNotePDFProps) => {
-    const displayDate = note?.fecha ? new Date(note.fecha) : new Date();
+    const displayDate = safeParseDate(note?.fecha) || new Date();
     const formattedDate = format(displayDate, "dd 'de' MMMM, yyyy 'a las' hh:mm b", { locale: es });
 
     // Handle both ClinicalHistoryNote and ClinicalHistory (fallback)
@@ -172,18 +192,36 @@ export const EvolutionNotePDF = ({ note, data: propData, seguimiento: propSeguim
         <Document title="Nota de Evolución">
             <Page size="A4" style={styles.page}>
                 {/* Header */}
-                <View style={styles.header}>
-                    <View>
-                        <Text style={styles.headerTitle}>NOTA DE EVOLUCIÓN</Text>
-                        <Text style={styles.headerSubtitle}>Registro de seguimiento clínico</Text>
+                <View style={styles.headerContainer}>
+                    <Image src={LOGO_MINAGUAS} style={styles.logoMinAguas} />
+                    <View style={styles.headerTextContainer}>
+                        <Text style={styles.institutionTitle}>PORTAL CLÍNICO DE HISTORIAS - HIDROVEN-FALCÓN</Text>
+                        <Text style={styles.reportTitle}>NOTA DE EVOLUCIÓN MÉDICA</Text>
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.headerDate}>{formattedDate}</Text>
-                        {patient && (
-                            <Text style={[styles.headerSubtitle, { color: '#ffffff', marginTop: 5, fontSize: 11 }]}>
-                                {patient.name} ({patient.age} años)
-                            </Text>
-                        )}
+                    <Image src={LOGO_HIDROVEN} style={styles.logoHidroven} />
+                </View>
+
+                {/* Info Card (Patient & Date) */}
+                <View style={{ marginBottom: 15 }}>
+                    <View style={styles.card}>
+                        <View style={styles.grid}>
+                            <View style={styles.gridItem}>
+                                <Text style={styles.label}>Paciente:</Text>
+                                <Text style={styles.value}>{patient?.name || 'No registrado'}</Text>
+                            </View>
+                            <View style={styles.gridItem}>
+                                <Text style={styles.label}>Edad:</Text>
+                                <Text style={styles.value}>{patient?.age ? `${patient.age} años` : 'No registrada'}</Text>
+                            </View>
+                            <View style={styles.gridItem}>
+                                <Text style={styles.label}>Fecha de Registro:</Text>
+                                <Text style={styles.value}>{formattedDate}</Text>
+                            </View>
+                            <View style={styles.gridItem}>
+                                <Text style={styles.label}>Médico Tratante:</Text>
+                                <Text style={styles.value}>{note?.doctor?.user?.name ? `Dr. ${note.doctor.user.name}` : 'No asignado'}</Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 

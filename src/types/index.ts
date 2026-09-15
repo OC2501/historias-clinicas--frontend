@@ -13,3 +13,5 @@ export * from '../features/admin/types/specialty.types';
 export * from '../features/admin/types/configuration.types';
 export * from '../features/dashboard/types/dashboard.types';
 export * from '../features/admin/types/user.types';
+export * from '../features/consultas/types/consultas.type';
+export * from '../features/consultas/types/consultas.schema';

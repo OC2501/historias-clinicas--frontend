@@ -24,6 +24,7 @@ interface TablePaginationProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   className?: string;
+  pageSizeOptions?: number[];
 }
 
 export function TablePagination({
@@ -34,6 +35,7 @@ export function TablePagination({
   onPageChange,
   onPageSizeChange,
   className,
+  pageSizeOptions = [10, 20, 50, 100],
 }: TablePaginationProps) {
   const generatePaginationItems = () => {
     const items = [];
@@ -81,7 +83,7 @@ export function TablePagination({
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((size) => (
+              {pageSizeOptions.map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>

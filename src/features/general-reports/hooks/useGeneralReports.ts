@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { generalReportsApi } from '../api/general-reports.api';
 
-export const useGeneralReports = (timeframe: string = '6m', startDate?: string, endDate?: string) => {
+export const useGeneralReports = (timeframe: string = '1w', startDate?: string, endDate?: string) => {
   const summaryQuery = useQuery({
     queryKey: ['reports-summary', timeframe, startDate, endDate],
     queryFn: () => generalReportsApi.getSummary(timeframe, startDate, endDate),
@@ -27,6 +27,11 @@ export const useGeneralReports = (timeframe: string = '6m', startDate?: string, 
     queryFn: () => generalReportsApi.getTopDiagnoses(timeframe, startDate, endDate),
   });
 
+  const gerenciasQuery = useQuery({
+    queryKey: ['reports-gerencias', timeframe, startDate, endDate],
+    queryFn: () => generalReportsApi.getGerenciasDistribution(timeframe, startDate, endDate),
+  });
+
   const appointmentsQuery = useQuery({
     queryKey: ['reports-appointments', timeframe, startDate, endDate],
     queryFn: () => generalReportsApi.getAppointmentsStats(timeframe, startDate, endDate),
@@ -38,6 +43,7 @@ export const useGeneralReports = (timeframe: string = '6m', startDate?: string, 
     demographicsQuery.isLoading ||
     trendsQuery.isLoading ||
     diagnosesQuery.isLoading ||
+    gerenciasQuery.isLoading ||
     appointmentsQuery.isLoading;
 
   const isError =
@@ -46,6 +52,7 @@ export const useGeneralReports = (timeframe: string = '6m', startDate?: string, 
     demographicsQuery.isError ||
     trendsQuery.isError ||
     diagnosesQuery.isError ||
+    gerenciasQuery.isError ||
     appointmentsQuery.isError;
 
   return {
@@ -54,6 +61,7 @@ export const useGeneralReports = (timeframe: string = '6m', startDate?: string, 
     demographics: demographicsQuery.data,
     trends: trendsQuery.data,
     diagnoses: diagnosesQuery.data,
+    gerencias: gerenciasQuery.data,
     appointments: appointmentsQuery.data,
     isLoading,
     isError,
@@ -63,6 +71,7 @@ export const useGeneralReports = (timeframe: string = '6m', startDate?: string, 
       demographicsQuery.refetch();
       trendsQuery.refetch();
       diagnosesQuery.refetch();
+      gerenciasQuery.refetch();
       appointmentsQuery.refetch();
     }
   };
